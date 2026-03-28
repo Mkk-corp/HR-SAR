@@ -273,7 +273,7 @@ input, select, textarea { font-family: var(--font); }
 
 /* ======= Pages ======= */
 .page {
-    padding: 26px;
+    padding: 26px 26px 116px;
     flex: 1;
 }
 
@@ -935,6 +935,38 @@ input, select, textarea { font-family: var(--font); }
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(8px); }
     to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ======= Footer ======= */
+.app-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: var(--sidebar-w);
+    height: 96px;
+    background: var(--card);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--text-3);
+    z-index: 50;
+    padding: 0 16px;
+}
+
+.footer-sep { opacity: .4; }
+
+.footer-logo {
+    height: 80px;
+    width: auto;
+    opacity: 1;
+    vertical-align: middle;
+}
+
+@media (max-width: 768px) {
+    .app-footer { right: 0; }
 }
 
 /* ======= Scrollbar ======= */
