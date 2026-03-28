@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام إدارة الموارد البشرية</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div class="app-container">
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <div class="logo-icon">HR</div>
+                <div class="logo-text">
+                    <span class="logo-title">الموارد البشرية</span>
+                    <span class="logo-subtitle">إدارة الموظفين</span>
+                </div>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <ul>
+                <li>
+                    <a href="#" class="nav-link active" data-page="dashboard">
+                        <span class="nav-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                        </span>
+                        <span>لوحة التحكم</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="nav-link" data-page="employees">
+                        <span class="nav-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        </span>
+                        <span>الموظفون</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="nav-link" data-page="facilities">
+                        <span class="nav-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                        </span>
+                        <span>المنشآت</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="nav-link" data-page="reports">
+                        <span class="nav-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                        </span>
+                        <span>التقارير</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="user-avatar">م</div>
+                <div class="user-details">
+                    <span class="user-name">مدير النظام</span>
+                    <span class="user-role">مسؤول</span>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+        <header class="top-bar">
+            <button class="menu-toggle" id="menuToggle">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+            <div class="page-title" id="pageTitle">لوحة التحكم</div>
+            <div class="top-bar-actions"></div>
+        </header>
+
+        <!-- Dashboard Page -->
+        <div class="page" id="page-dashboard">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon blue">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="totalEmployees">0</span>
+                        <span class="stat-label">إجمالي الموظفين</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon green">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="activeEmployees">0</span>
+                        <span class="stat-label">الموظفون النشطون</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon purple">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="totalDepts">0</span>
+                        <span class="stat-label">المنشآت</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon orange">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="totalSalary">0</span>
+                        <span class="stat-label">إجمالي الرواتب (ر.س)</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>آخر الموظفين المضافين</h3>
+                    </div>
+                    <div class="card-body p0">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>الاسم</th>
+                                    <th>المنشأة</th>
+                                    <th>نوع الموظف</th>
+                                    <th>الحالة</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentEmployeesList"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3>توزيع المنشآت</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="dept-distribution" id="deptDistribution"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Employees Page -->
+        <div class="page hidden" id="page-employees">
+            <div class="card">
+                <div class="card-header">
+                    <h3>قائمة الموظفين</h3>
+                    <div class="card-actions">
+                        <button class="btn btn-primary" id="addEmployeePageBtn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                            إضافة موظف
+                        </button>
+                        <div class="search-wrapper">
+                            <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                            <input type="text" class="search-input" id="searchInput" placeholder="بحث عن موظف...">
+                        </div>
+                        <select class="filter-select" id="deptFilter">
+                            <option value="">جميع المنشآت</option>
+                        </select>
+                        <select class="filter-select" id="statusFilter">
+                            <option value="">جميع الحالات</option>
+                            <option value="نشط">نشط</option>
+                            <option value="غير نشط">غير نشط</option>
+                            <option value="خروج نهائي">خروج نهائي</option>
+                            <option value="خروج مؤقت">خروج مؤقت</option>
+                            <option value="اجازة">اجازة</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card-body p0">
+                    <table class="table" id="employeesTable">
+                        <thead>
+                            <tr>
+                                <th>الرقم التوظيفي</th>
+                                <th>الموظف</th>
+                                <th>نوع الموظف</th>
+                                <th>المنشأة</th>
+                                <th>المرتب</th>
+                                <th>الحالة</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="employeesList"></tbody>
+                    </table>
+                    <div class="empty-state hidden" id="emptyState">
+                        <div class="empty-icon">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                        </div>
+                        <p>لا يوجد موظفون مطابقون</p>
+                        <button class="btn btn-primary" id="emptyAddBtn">إضافة موظف جديد</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Employee Page -->
+        <div class="page hidden" id="page-add-employee">
+            <div class="add-emp-wrapper">
+                <form id="addEmpForm" autocomplete="off">
+
+                    <!-- البيانات الشخصية -->
+                    <div class="card form-card">
+                        <div class="card-header"><h3>البيانات الشخصية</h3></div>
+                        <div class="card-body">
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label>الاسم <span class="required">*</span></label>
+                                    <input type="text" id="ae-name" required placeholder="الاسم الكامل">
+                                </div>
+                                <div class="form-group">
+                                    <label>الرقم التوظيفي <span class="required">*</span></label>
+                                    <input type="text" id="ae-code" required placeholder="مثال: EMP-001">
+                                </div>
+                                <div class="form-group">
+                                    <label>رقم الهوية الوطني <span class="required">*</span></label>
+                                    <input type="text" id="ae-nationalId" required placeholder="رقم الهوية الوطني">
+                                </div>
+                                <div class="form-group">
+                                    <label>الجنسية <span class="required">*</span></label>
+                                    <input type="text" id="ae-nationality" required placeholder="سعودي، مصري، أردني...">
+                                </div>
+                                <div class="form-group">
+                                    <label>نوع الموظف <span class="required">*</span></label>
+                                    <select id="ae-empType" required>
+                                        <option value="">اختر...</option>
+                                        <option value="سعودي">سعودي</option>
+                                        <option value="اجنبي">اجنبي</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>تاريخ انتهاء الهوية</label>
+                                    <input type="date" id="ae-idExpiry">
+                                </div>
+                                <div class="form-group">
+                                    <label>تاريخ دخول المملكة</label>
+                                    <input type="date" id="ae-entryDate">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- بيانات العمل -->
+                    <div class="card form-card">
+                        <div class="card-header"><h3>بيانات العمل</h3></div>
+                        <div class="card-body">
+                            <div class="form-grid">
+                                <div class="form-group form-span-2">
+                                    <label>المنشأة <span class="required">*</span></label>
+                                    <select id="ae-facilityId" required>
+                                        <option value="">اختر المنشأة...</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>المرتب الأساسي (ر.س) <span class="required">*</span></label>
+                                    <input type="number" id="ae-salary" required placeholder="0" min="0">
+                                </div>
+                                <div class="form-group">
+                                    <label>حالة الموظف <span class="required">*</span></label>
+                                    <select id="ae-status" required>
+                                        <option value="نشط">نشط</option>
+                                        <option value="غير نشط">غير نشط</option>
+                                        <option value="خروج نهائي">خروج نهائي</option>
+                                        <option value="خروج مؤقت">خروج مؤقت</option>
+                                        <option value="اجازة">اجازة</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- البنك والتواصل -->
+                    <div class="card form-card">
+                        <div class="card-header"><h3>البنك والتواصل</h3></div>
+                        <div class="card-body">
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label>البنك المحول إليه الرواتب</label>
+                                    <input type="text" id="ae-bank" placeholder="اسم البنك">
+                                </div>
+                                <div class="form-group">
+                                    <label>رقم الآيبان (IBAN)</label>
+                                    <input type="text" id="ae-iban" placeholder="SA00 0000 0000 0000 0000 0000" dir="ltr">
+                                </div>
+                                <div class="form-group">
+                                    <label>كود الدولة</label>
+                                    <input type="text" id="ae-countryCode" placeholder="+966" dir="ltr">
+                                </div>
+                                <div class="form-group">
+                                    <label>رقم الهاتف</label>
+                                    <input type="tel" id="ae-phone" placeholder="5XXXXXXXX" dir="ltr">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-actions-bar">
+                        <button type="button" class="btn btn-secondary" id="ae-cancelBtn">إلغاء</button>
+                        <button type="button" class="btn btn-primary" id="ae-saveBtn">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                            حفظ الموظف
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+
+        <!-- Facilities Page -->
+        <div class="page hidden" id="page-facilities">
+            <div class="card">
+                <div class="card-header">
+                    <h3>قائمة المنشآت</h3>
+                    <button class="btn btn-primary" id="addFacilityBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        إضافة منشأة
+                    </button>
+                </div>
+                <div class="card-body p0">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>النوع</th>
+                                <th>اسم المنشأة</th>
+                                <th>الرقم الوطني الموحد</th>
+                                <th>رقم السجل التجاري</th>
+                                <th>تاريخ السجل</th>
+                                <th>الموظفون</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="facilitiesTableBody"></tbody>
+                    </table>
+                    <div class="empty-state hidden" id="facilitiesEmptyState">
+                        <div class="empty-icon">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                        </div>
+                        <p>لا يوجد منشآت بعد</p>
+                        <button class="btn btn-primary" id="emptyAddFacilityBtn">إضافة منشأة جديدة</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Facility Detail Page -->
+        <div class="page hidden" id="page-facility-detail">
+            <div class="detail-wrapper">
+                <div class="detail-breadcrumb" id="facilityBreadcrumb"></div>
+                <div id="facilityInfoCard"></div>
+                <div id="subFacilitiesCard"></div>
+                <div id="facilityEmployeesCard"></div>
+            </div>
+        </div>
+
+        <!-- Reports Page -->
+        <div class="page hidden" id="page-reports">
+            <div class="reports-grid">
+                <div class="card">
+                    <div class="card-header"><h3>ملخص الرواتب حسب المنشأة</h3></div>
+                    <div class="card-body" id="salaryReport"></div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><h3>توزيع الموظفين حسب الحالة</h3></div>
+                    <div class="card-body" id="statusReport"></div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<!-- Facility Add/Edit Modal -->
+<div class="modal-overlay hidden" id="facilityModal">
+    <div class="modal modal-lg">
+        <div class="modal-header">
+            <h2 id="facilityModalTitle">إضافة منشأة جديدة</h2>
+            <button class="modal-close" id="closeFacilityBtn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <form id="facilityForm" autocomplete="off">
+                <input type="hidden" id="facilityId">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>اسم المنشأة <span class="required">*</span></label>
+                        <input type="text" id="fac-name" required placeholder="اسم المنشأة">
+                    </div>
+                    <div class="form-group">
+                        <label>نوع المنشأة <span class="required">*</span></label>
+                        <select id="fac-type" required>
+                            <option value="">اختر...</option>
+                            <option value="اساسية">اساسية</option>
+                            <option value="فرعيه">فرعيه</option>
+                        </select>
+                    </div>
+                    <div class="form-group form-span-2 hidden" id="fac-parent-row">
+                        <label>المنشأة الأساسية <span class="required">*</span></label>
+                        <select id="fac-parentId">
+                            <option value="">اختر المنشأة الأساسية...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>الرقم الوطني الموحد</label>
+                        <input type="text" id="fac-nationalNumber" placeholder="الرقم الوطني الموحد">
+                    </div>
+                    <div class="form-group">
+                        <label>رقم السجل التجاري</label>
+                        <input type="text" id="fac-crNumber" placeholder="رقم السجل التجاري">
+                    </div>
+                    <div class="form-group">
+                        <label>تاريخ إصدار السجل التجاري</label>
+                        <input type="date" id="fac-crDate">
+                    </div>
+                    <div class="form-group">
+                        <label>الرقم الضريبي</label>
+                        <input type="text" id="fac-taxNumber" placeholder="الرقم الضريبي">
+                    </div>
+                    <div class="form-group form-span-2">
+                        <label>رقم المنشأة في التأمينات</label>
+                        <input type="text" id="fac-insuranceNumber" placeholder="رقم المنشأة في التأمينات">
+                    </div>
+                    <div class="form-group form-span-2">
+                        <label>العنوان الوطني (رابط أو كود)</label>
+                        <input type="text" id="fac-nationalAddress" placeholder="رابط الخريطة أو كود العنوان الوطني" dir="ltr">
+                    </div>
+                    <div class="form-group form-span-2">
+                        <label>موقع العمل</label>
+                        <input type="text" id="fac-workLocation" placeholder="وصف موقع العمل (حي، مدينة...)">
+                    </div>
+                </div>
+                <div class="form-section-label">حساب تحويل الرواتب</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>اسم صاحب الحساب</label>
+                        <input type="text" id="fac-accountName" placeholder="اسم صاحب الحساب">
+                    </div>
+                    <div class="form-group">
+                        <label>رقم الآيبان (IBAN)</label>
+                        <input type="text" id="fac-iban" placeholder="SA00 0000 0000 0000 0000 0000" dir="ltr">
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" id="cancelFacilityBtn">إلغاء</button>
+            <button class="btn btn-primary" id="saveFacilityBtn">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                حفظ
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Employee Modal -->
+<div class="modal-overlay hidden" id="employeeModal">
+    <div class="modal modal-lg">
+        <div class="modal-header">
+            <h2 id="modalTitle">تعديل بيانات الموظف</h2>
+            <button class="modal-close" id="closeModalBtn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <form id="employeeForm" autocomplete="off">
+                <input type="hidden" id="employeeId">
+
+                <div class="form-section-label">البيانات الشخصية</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>الاسم <span class="required">*</span></label>
+                        <input type="text" id="empName" required placeholder="الاسم الكامل">
+                    </div>
+                    <div class="form-group">
+                        <label>الرقم التوظيفي <span class="required">*</span></label>
+                        <input type="text" id="empCode" required placeholder="مثال: EMP-001">
+                    </div>
+                    <div class="form-group">
+                        <label>رقم الهوية الوطني <span class="required">*</span></label>
+                        <input type="text" id="empNationalId" required placeholder="رقم الهوية الوطني">
+                    </div>
+                    <div class="form-group">
+                        <label>الجنسية <span class="required">*</span></label>
+                        <input type="text" id="empNationality" required placeholder="سعودي، مصري، أردني...">
+                    </div>
+                    <div class="form-group">
+                        <label>نوع الموظف <span class="required">*</span></label>
+                        <select id="empType" required>
+                            <option value="">اختر...</option>
+                            <option value="سعودي">سعودي</option>
+                            <option value="اجنبي">اجنبي</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>تاريخ انتهاء الهوية</label>
+                        <input type="date" id="empIdExpiry">
+                    </div>
+                    <div class="form-group">
+                        <label>تاريخ دخول المملكة</label>
+                        <input type="date" id="empEntryDate">
+                    </div>
+                </div>
+
+                <div class="form-section-label">بيانات العمل</div>
+                <div class="form-grid">
+                    <div class="form-group form-span-2">
+                        <label>المنشأة <span class="required">*</span></label>
+                        <select id="empFacilityId" required>
+                            <option value="">اختر المنشأة...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>المرتب الأساسي (ر.س) <span class="required">*</span></label>
+                        <input type="number" id="empSalary" required placeholder="0" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>حالة الموظف</label>
+                        <select id="empStatus">
+                            <option value="نشط">نشط</option>
+                            <option value="غير نشط">غير نشط</option>
+                            <option value="خروج نهائي">خروج نهائي</option>
+                            <option value="خروج مؤقت">خروج مؤقت</option>
+                            <option value="اجازة">اجازة</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-section-label">البنك والتواصل</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>البنك المحول إليه الرواتب</label>
+                        <input type="text" id="empBank" placeholder="اسم البنك">
+                    </div>
+                    <div class="form-group">
+                        <label>رقم الآيبان (IBAN)</label>
+                        <input type="text" id="empIban" placeholder="SA00 0000 0000 0000 0000 0000" dir="ltr">
+                    </div>
+                    <div class="form-group">
+                        <label>كود الدولة</label>
+                        <input type="text" id="empCountryCode" placeholder="+966" dir="ltr">
+                    </div>
+                    <div class="form-group">
+                        <label>رقم الهاتف</label>
+                        <input type="tel" id="empPhone" placeholder="5XXXXXXXX" dir="ltr">
+                    </div>
+                </div>
+
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" id="cancelModalBtn">إلغاء</button>
+            <button class="btn btn-primary" id="saveEmployeeBtn">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                حفظ
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Confirm Delete Modal -->
+<div class="modal-overlay hidden" id="confirmModal">
+    <div class="modal modal-sm">
+        <div class="modal-header">
+            <h2>تأكيد الحذف</h2>
+            <button class="modal-close" id="closeConfirmBtn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="confirm-icon">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="1.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </div>
+            <p class="confirm-title">هل أنت متأكد من الحذف؟</p>
+            <p class="confirm-sub">لا يمكن التراجع عن هذه العملية بعد تأكيدها.</p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" id="cancelConfirmBtn">إلغاء</button>
+            <button class="btn btn-danger" id="confirmDeleteBtn">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+                حذف
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="toast hidden" id="toast">
+    <span class="toast-icon" id="toastIcon"></span>
+    <span id="toastMsg"></span>
+</div>
+
+<!-- Sidebar overlay (mobile) -->
+<div class="sidebar-overlay hidden" id="sidebarOverlay"></div>
+
+<script src="js/app.js"></script>
+</body>
+</html>
