@@ -75,6 +75,7 @@ function navigateToFacility(id) { currentFacilityId = id; navigate('facility-det
 | `add-employee` | `#page-add-employee` | إضافة موظف جديد | — (زر في صفحة الموظفين) |
 | `facilities` | `#page-facilities` | المنشآت | `[data-page="facilities"]` |
 | `facility-detail` | `#page-facility-detail` | يُعرض اسم المنشأة | يضيء `[data-page="facilities"]` |
+| `employee-detail` | `#page-employee-detail` | يُعرض اسم الموظف | يضيء `[data-page="employees"]` |
 | `reports` | `#page-reports` | التقارير | `[data-page="reports"]` |
 
 ---
@@ -102,6 +103,7 @@ function navigateToFacility(id) { currentFacilityId = id; navigate('facility-det
   iban:        String,   // رقم IBAN | ''
   countryCode: String,   // '+966' | ''
   phone:       String,   // رقم الهاتف | ''
+  photo:       Object|null,  // { name, size, type, data: base64, uploadedAt } | null
   createdAt:   String,   // ISO datetime string
 }
 ```
@@ -166,6 +168,7 @@ let facilities = JSON.parse(localStorage.getItem('hr_facilities') || '[]');
 let currentEditId          = null;   // id الموظف الذي يُعدَّل حالياً في المودال
 let currentFacilityEditId  = null;   // id المنشأة التي تُعدَّل حالياً في المودال
 let currentFacilityId      = null;   // id المنشأة المعروضة في صفحة التفاصيل
+let currentEmployeeId      = null;   // id الموظف المعروض في صفحة تفاصيل الموظف
 let deleteTargetId         = null;   // id الموظف المرشح للحذف
 let deleteFacilityTargetId = null;   // id المنشأة المرشحة للحذف
 let deleteMode             = null;   // 'employee' | 'facility'
@@ -203,11 +206,38 @@ const ms = !search ||
 return ms && (!facId || e.facilityId === facId) && (!status || e.status === status);
 ```
 
-**أعمدة الجدول:** الرقم التوظيفي، الموظف (أفاتار + اسم + جنسية)، نوع الموظف، المنشأة، المرتب، الحالة، الإجراءات
+**أعمدة الجدول:** الرقم التوظيفي، الموظف (أفاتار/صورة + اسم + جنسية)، نوع الموظف، المنشأة، المرتب، الحالة، الإجراءات
 
 **الإجراءات:** تعديل (يفتح `employeeModal`)، حذف (يفتح `confirmModal`)
 
+**النقر على الصف:** كل صف `<tr data-emp-id="...">` — النقر خارج أزرار الإجراءات ينتقل إلى `employee-detail` عبر `navigateToEmployee(id)`
+
 **الحالة الفارغة:** `#emptyState` يظهر عند عدم وجود نتائج مع زر "إضافة موظف جديد"
+
+### 7.2.1 صفحة تفاصيل الموظف
+
+**الدالة:** `renderEmployeeDetail()`
+
+**المُشغِّل:** `navigateToEmployee(id)` ← يُعيِّن `currentEmployeeId` ويوجّه إلى `employee-detail`
+
+**أقسام الصفحة:**
+
+| المعرف | المحتوى |
+|---|---|
+| `#employeeBreadcrumb` | مسار التنقل: الموظفون › اسم الموظف |
+| `#employeeDetailContent` | محتوى الصفحة الكامل |
+
+**بطاقة الرأس:** صورة الموظف (أو أفاتار ملوَّن)، الاسم، المسمى الوظيفي، اسم المنشأة، الشارات (الحالة، نوع الموظف، حالة العقد، نوع العقد)، أزرار تعديل وحذف.
+
+**الأقسام الأربعة:**
+1. **البيانات الشخصية** — رقم الهوية، الجنسية، النوع، تواريخ الهوية ورخصة العمل
+2. **بيانات العمل** — الرقم التوظيفي، المنشأة، المسمى، المرتب، نوع العقد وحالته
+3. **البنك والتواصل** — البنك، IBAN (بخط monospace واتجاه ltr)، الهاتف
+4. **العقد والمستندات** — يظهر فقط إذا وُجد ملف عقد أو مستندات إضافية
+
+**زر تعديل من صفحة التفاصيل:** يفتح `openEditModal(currentEmployeeId)` ← بعد الحفظ يُعيد رسم `renderEmployeeDetail()` لا `renderEmployees()`
+
+**زر حذف من صفحة التفاصيل:** يفتح `confirmModal` — بعد التأكيد ينتقل إلى `employees`
 
 ### 7.3 صفحة إضافة موظف
 
@@ -297,7 +327,8 @@ else                    renderFacilities();            // حُذفت من قائ
 | `fmt(n)` | يُنسِّق الرقم بالتنسيق العربي السعودي (`ar-SA`) |
 | `fmtDate(d)` | يُنسِّق التاريخ بالتنسيق العربي (`day month year`) أو `'—'` |
 | `statusBadge(s)` | يُرجع HTML شارة الحالة الوظيفية |
-| `empAvatar(name)` | يُرجع HTML دائرة الأفاتار |
+| `empAvatar(name)` | يُرجع HTML دائرة الأفاتار بالحرف الأول واللون |
+| `empAvatarEl(emp)` | يُرجع `<img>` من الصورة المحفوظة أو يُعيد `empAvatar(name)` |
 | `showToast(msg, type)` | يعرض رسالة إشعار مؤقتة (3 ثوانٍ) |
 | `infoItem(label, value)` | يُرجع HTML عنصر في شبكة معلومات المنشأة، مع كشف الروابط |
 | `populateFacilitySelect(selectId)` | يُعبِّئ قائمة المنشآت في أي `<select>` |
@@ -326,6 +357,8 @@ else                    renderFacilities();            // حُذفت من قائ
 | change | `#fac-parentId` | `inheritFromParent(value)` |
 | click | `#saveFacilityBtn` | `saveFacility()` |
 | click | `#saveEmployeeBtn` | `saveEmployee()` |
+| change | `#ae-photo` | معاينة صورة الموظف في حلقة الإضافة |
+| change | `#empPhoto` | معاينة صورة الموظف في حلقة التعديل |
 | click | `#confirmDeleteBtn` | `confirmDeleteAction()` |
 | keydown | `document` | `Escape` → يغلق جميع المودالات |
 
@@ -344,6 +377,10 @@ else                    renderFacilities();            // حُذفت من قائ
 | `#page-facility-detail` | `[data-fac-delete]` | `openConfirmDeleteFacility(id)` |
 | `#employeesList` | `[data-edit]` | `openEditModal(id)` |
 | `#employeesList` | `[data-delete]` | `openConfirmDelete(id)` |
+| `#employeesList` | `tr[data-emp-id]` (النقر على الصف) | `navigateToEmployee(id)` |
+| `#page-employee-detail` | `#backToEmployeesBtn` | `navigate('employees')` |
+| `#page-employee-detail` | `#editEmployeeDetailBtn` | `openEditModal(currentEmployeeId)` |
+| `#page-employee-detail` | `#deleteEmployeeDetailBtn` | يفتح `confirmModal` |
 
 ---
 

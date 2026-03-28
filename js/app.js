@@ -6,6 +6,7 @@ let facilities = JSON.parse(localStorage.getItem('hr_facilities') || '[]');
 let currentEditId          = null;
 let currentFacilityEditId  = null;
 let currentFacilityId      = null;
+let currentEmployeeId      = null;
 let deleteTargetId         = null;
 let deleteFacilityTargetId = null;
 let deleteMode             = null; // 'employee' | 'facility'
@@ -54,6 +55,10 @@ function statusBadge(s) {
 function empAvatar(name) {
     return `<div class="emp-avatar" style="background:${avatarColor(name)}">${(name||'?').trim().charAt(0)}</div>`;
 }
+function empAvatarEl(emp) {
+    if (emp.photo?.data) return `<img src="${emp.photo.data}" class="emp-avatar emp-photo" alt="${emp.name||''}">`;
+    return empAvatar(emp.name);
+}
 function showToast(msg, type = '') {
     const icons = { success: '✓', error: '✕', warning: '!' };
     const t = document.getElementById('toast');
@@ -72,6 +77,110 @@ function infoItem(label, value) {
     return `<div class="info-item"><span class="info-label">${label}</span><span class="info-value">${display}</span></div>`;
 }
 
+// ===== File Handling =====
+const MAX_FILE_MB   = 2;
+const MAX_FILE_SIZE = MAX_FILE_MB * 1024 * 1024;
+let _editRemovedDocs = new Set();
+
+function readFileAsBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload  = e => resolve({ name: file.name, size: file.size, type: file.type, data: e.target.result, uploadedAt: new Date().toISOString() });
+        reader.onerror = () => reject(new Error('فشل قراءة الملف'));
+        reader.readAsDataURL(file);
+    });
+}
+
+function fileSizeLabel(b) {
+    if (b < 1024) return b + ' B';
+    if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+    return (b / 1048576).toFixed(1) + ' MB';
+}
+
+function fileItemHTML(f, showDelete) {
+    const ext = (f.name || '').split('.').pop().toLowerCase();
+    const isImg = ['jpg','jpeg','png','gif','webp'].includes(ext);
+    const icon = isImg
+        ? `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`
+        : `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
+    const delBtn = showDelete
+        ? `<button type="button" class="file-item-delete" data-doc-key="${f.name.replace(/"/g,'&quot;')}" title="حذف"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>`
+        : '';
+    return `<div class="file-item">
+        <span class="file-item-icon">${icon}</span>
+        <a class="file-item-name" href="${f.data}" download="${f.name.replace(/"/g,'&quot;')}" title="${f.name.replace(/"/g,'&quot;')}">${f.name}</a>
+        <span class="file-item-size">${fileSizeLabel(f.size)}</span>
+        ${delBtn}
+    </div>`;
+}
+
+function filePendingHTML(name) {
+    return `<div class="file-item-pending">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        ${name}
+    </div>`;
+}
+
+function renderEditContractFile(file) {
+    const el = document.getElementById('emp-contractFileList');
+    el.innerHTML = file
+        ? fileItemHTML(file, false)
+        : '<span style="color:var(--text-3);font-size:12.5px">لا يوجد عقد مرفق</span>';
+}
+
+function renderEditAdditionalDocs(docs) {
+    const el = document.getElementById('emp-additionalDocsList');
+    const active = (docs || []).filter(d => !_editRemovedDocs.has(d.name));
+    el.innerHTML = active.length
+        ? active.map(d => fileItemHTML(d, true)).join('')
+        : '<span style="color:var(--text-3);font-size:12.5px">لا توجد مستندات إضافية</span>';
+}
+
+// ===== Searchable Select =====
+function initSearchableSelect(searchId, dropdownId, hiddenId, items) {
+    const searchInput = document.getElementById(searchId);
+    const dropdown    = document.getElementById(dropdownId);
+    const hidden      = document.getElementById(hiddenId);
+
+    function getIndices(q) {
+        if (!q) return Array.from({ length: Math.min(50, items.length) }, (_, i) => i);
+        const lower = q;
+        return items.reduce((acc, item, i) => { if (item.includes(lower)) acc.push(i); return acc; }, []);
+    }
+
+    function renderList(indices) {
+        const shown = indices.slice(0, 100);
+        dropdown.innerHTML = shown.length
+            ? shown.map(i => `<div class="searchable-select-item" data-idx="${i}">${items[i]}</div>`).join('') +
+              (indices.length > 100 ? `<div class="searchable-select-hint">تعرض 100 من ${indices.length} نتيجة — اكتب للتضييق</div>` : '')
+            : '<div class="searchable-select-hint">لا توجد نتائج</div>';
+        dropdown.classList.remove('hidden');
+    }
+
+    searchInput.addEventListener('focus', () => renderList(getIndices(searchInput.value.trim())));
+
+    searchInput.addEventListener('input', () => {
+        const q = searchInput.value.trim();
+        if (!q) hidden.value = '';
+        renderList(getIndices(q));
+    });
+
+    dropdown.addEventListener('mousedown', e => {
+        const item = e.target.closest('.searchable-select-item');
+        if (!item) return;
+        const val = items[parseInt(item.dataset.idx)];
+        searchInput.value = val;
+        hidden.value = val;
+        dropdown.classList.add('hidden');
+    });
+
+    document.addEventListener('click', e => {
+        if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.classList.add('hidden');
+        }
+    });
+}
+
 // ===== Navigation =====
 const PAGE_TITLES = {
     dashboard:         'لوحة التحكم',
@@ -79,6 +188,7 @@ const PAGE_TITLES = {
     'add-employee':    'إضافة موظف جديد',
     facilities:        'المنشآت',
     'facility-detail': 'تفاصيل المنشأة',
+    'employee-detail': 'بيانات الموظف',
     reports:           'التقارير',
 };
 
@@ -87,7 +197,9 @@ function navigate(page) {
     document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
 
     document.getElementById(`page-${page}`)?.classList.remove('hidden');
-    const navTarget = (page === 'facility-detail') ? 'facilities' : page;
+    const navTarget = page === 'facility-detail' ? 'facilities'
+                    : page === 'employee-detail'  ? 'employees'
+                    : page;
     document.querySelector(`[data-page="${navTarget}"]`)?.classList.add('active');
     document.getElementById('pageTitle').textContent = PAGE_TITLES[page] || '';
     document.getElementById('sidebar').classList.remove('open');
@@ -95,7 +207,8 @@ function navigate(page) {
 
     const renderers = {
         dashboard, employees: renderEmployees, 'add-employee': renderAddEmployeePage,
-        facilities: renderFacilities, 'facility-detail': renderFacilityDetail, reports: renderReports,
+        facilities: renderFacilities, 'facility-detail': renderFacilityDetail,
+        'employee-detail': renderEmployeeDetail, reports: renderReports,
     };
     renderers[page]?.();
 }
@@ -103,6 +216,11 @@ function navigate(page) {
 function navigateToFacility(id) {
     currentFacilityId = id;
     navigate('facility-detail');
+}
+
+function navigateToEmployee(id) {
+    currentEmployeeId = id;
+    navigate('employee-detail');
 }
 
 // ===== Dashboard =====
@@ -115,7 +233,7 @@ function dashboard() {
     const recent = [...employees].reverse().slice(0, 6);
     document.getElementById('recentEmployeesList').innerHTML = recent.length
         ? recent.map(e => `<tr>
-            <td><div class="emp-cell">${empAvatar(e.name)}<span style="font-weight:500">${e.name}</span></div></td>
+            <td><div class="emp-cell">${empAvatarEl(e)}<span style="font-weight:500">${e.name}</span></div></td>
             <td>${getFacilityName(e.facilityId)}</td>
             <td style="color:#64748B">${e.empType || '—'}</td>
             <td>${statusBadge(e.status)}</td>
@@ -161,9 +279,9 @@ function applyFilters() {
         tbody.innerHTML = ''; empty.classList.remove('hidden');
     } else {
         empty.classList.add('hidden');
-        tbody.innerHTML = filtered.map(e => `<tr>
-            <td><span class="emp-code">${e.code}</span></td>
-            <td><div class="emp-cell">${empAvatar(e.name)}<div>
+        tbody.innerHTML = filtered.map(e => `<tr data-emp-id="${e.id}">
+            <td><span class="emp-code">${e.code || '—'}</span></td>
+            <td><div class="emp-cell">${empAvatarEl(e)}<div>
                 <div class="emp-name">${e.name}</div>
                 ${e.nationality ? `<div class="emp-email">${e.nationality}</div>` : ''}
             </div></div></td>
@@ -266,6 +384,14 @@ function renderFacilityDetail() {
                     ${infoItem('رقم المنشأة في التأمينات', f.insuranceNumber)}
                     ${infoItem('موقع العمل', f.workLocation)}
                 </div>
+                ${(f.economicActivity || f.isic4) ? `
+                    <div style="margin-top:18px;padding-top:16px;border-top:1px solid var(--border-light)">
+                        <div style="font-size:11.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:12px">نطاق العمل للكيان</div>
+                        <div class="info-grid">
+                            ${infoItem('النشاط الاقتصادي الفرعي', f.economicActivity)}
+                            ${infoItem('كود ISIC4', f.isic4)}
+                        </div>
+                    </div>` : ''}
                 ${(f.accountName || f.iban) ? `
                     <div style="margin-top:18px;padding-top:16px;border-top:1px solid var(--border-light)">
                         <div style="font-size:11.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:12px">حساب تحويل الرواتب</div>
@@ -366,6 +492,111 @@ function renderFacilityDetail() {
         </div>`;
 }
 
+// ===== Employee Detail Page =====
+function renderEmployeeDetail() {
+    const emp = employees.find(x => x.id === currentEmployeeId);
+    if (!emp) { navigate('employees'); return; }
+
+    document.getElementById('pageTitle').textContent = emp.name;
+
+    const photoEl = emp.photo?.data
+        ? `<img src="${emp.photo.data}" class="emp-detail-photo" alt="${emp.name}">`
+        : `<div class="emp-detail-avatar" style="background:${avatarColor(emp.name)}">${(emp.name||'?').trim().charAt(0)}</div>`;
+
+    const editSvg = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+    const delSvg  = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`;
+    const csBadge = { 'ساري': 'badge-success', 'منتهي': 'badge-danger', 'موقوف': 'badge-warning' };
+
+    document.getElementById('employeeBreadcrumb').innerHTML = `
+        <button class="btn btn-ghost btn-sm" id="backToEmployeesBtn">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+            الموظفون
+        </button>
+        <span class="breadcrumb-sep">›</span>
+        <span style="font-size:13px;font-weight:600;color:var(--text)">${emp.name}</span>`;
+
+    document.getElementById('employeeDetailContent').innerHTML = `
+        <div class="card" style="margin-bottom:18px">
+            <div class="card-body">
+                <div class="emp-detail-header">
+                    <div class="emp-detail-photo-wrap">${photoEl}</div>
+                    <div class="emp-detail-info">
+                        <div class="emp-detail-name">${emp.name}</div>
+                        ${emp.jobTitle ? `<div class="emp-detail-job">${emp.jobTitle}</div>` : ''}
+                        <div style="font-size:13px;color:var(--text-2);margin-top:2px">${getFacilityName(emp.facilityId)}</div>
+                        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+                            ${statusBadge(emp.status)}
+                            ${emp.empType  ? `<span class="badge badge-blue">${emp.empType}</span>` : ''}
+                            ${emp.contractStatus ? `<span class="badge ${csBadge[emp.contractStatus]||'badge-blue'}">${emp.contractStatus}</span>` : ''}
+                            ${emp.contractType   ? `<span class="badge badge-blue">${emp.contractType}</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="emp-detail-actions">
+                        <button class="btn btn-secondary btn-sm" id="editEmployeeDetailBtn">${editSvg} تعديل</button>
+                        <button class="btn btn-danger btn-sm" id="deleteEmployeeDetailBtn">${delSvg} حذف</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-bottom:18px">
+            <div class="card-header"><h3>البيانات الشخصية</h3></div>
+            <div class="card-body">
+                <div class="info-grid">
+                    ${infoItem('رقم الهوية الوطني', emp.nationalId)}
+                    ${infoItem('الجنسية', emp.nationality)}
+                    ${infoItem('نوع الموظف', emp.empType)}
+                    ${infoItem('تاريخ انتهاء الهوية', fmtDate(emp.idExpiry))}
+                    ${infoItem('تاريخ دخول المملكة', fmtDate(emp.entryDate))}
+                    ${infoItem('رقم رخصة العمل', emp.workPermitNumber)}
+                    ${infoItem('تاريخ انتهاء رخصة العمل', fmtDate(emp.workPermitExpiry))}
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-bottom:18px">
+            <div class="card-header"><h3>بيانات العمل</h3></div>
+            <div class="card-body">
+                <div class="info-grid">
+                    ${emp.code ? infoItem('الرقم التوظيفي', emp.code) : ''}
+                    ${infoItem('المنشأة', getFacilityName(emp.facilityId))}
+                    ${infoItem('المسمى الوظيفي', emp.jobTitle)}
+                    ${infoItem('المرتب الأساسي', emp.salary ? fmt(emp.salary) + ' ر.س' : null)}
+                    ${infoItem('نوع العقد', emp.contractType)}
+                    ${infoItem('حالة العقد', emp.contractStatus)}
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-bottom:18px">
+            <div class="card-header"><h3>البنك والتواصل</h3></div>
+            <div class="card-body">
+                <div class="info-grid">
+                    ${infoItem('البنك', emp.bank)}
+                    ${emp.iban ? `<div class="info-item"><span class="info-label">رقم الآيبان</span><span class="info-value" style="direction:ltr;text-align:right;font-family:monospace;font-size:12.5px">${emp.iban}</span></div>` : infoItem('رقم الآيبان', null)}
+                    ${infoItem('رقم الهاتف', [emp.countryCode, emp.phone].filter(Boolean).join(' '))}
+                </div>
+            </div>
+        </div>
+
+        ${(emp.contractFile || emp.additionalDocs?.length) ? `
+        <div class="card">
+            <div class="card-header"><h3>العقد والمستندات</h3></div>
+            <div class="card-body">
+                ${emp.contractFile ? `
+                <div style="margin-bottom:${emp.additionalDocs?.length ? '16px':'0'}">
+                    <div class="info-label" style="margin-bottom:8px">عقد العمل</div>
+                    ${fileItemHTML(emp.contractFile, false)}
+                </div>` : ''}
+                ${emp.additionalDocs?.length ? `
+                <div>
+                    <div class="info-label" style="margin-bottom:8px">مستندات إضافية</div>
+                    <div class="file-list">${emp.additionalDocs.map(d => fileItemHTML(d, false)).join('')}</div>
+                </div>` : ''}
+            </div>
+        </div>` : ''}`;
+}
+
 // ===== Facility Modal =====
 function populateParentSelect() {
     const sel = document.getElementById('fac-parentId');
@@ -397,8 +628,11 @@ function inheritFromParent(parentId) {
     document.getElementById('fac-insuranceNumber').value = p.insuranceNumber || '';
     document.getElementById('fac-nationalAddress').value = p.nationalAddress || '';
     document.getElementById('fac-workLocation').value    = p.workLocation    || '';
-    document.getElementById('fac-accountName').value     = p.accountName     || '';
-    document.getElementById('fac-iban').value            = p.iban            || '';
+    document.getElementById('fac-accountName').value     = p.accountName      || '';
+    document.getElementById('fac-iban').value            = p.iban             || '';
+    document.getElementById('fac-activitySearch').value  = p.economicActivity || '';
+    document.getElementById('fac-activity').value        = p.economicActivity || '';
+    document.getElementById('fac-isic4').value           = p.isic4            || '';
 }
 
 function openAddFacilityModal() {
@@ -407,6 +641,8 @@ function openAddFacilityModal() {
     document.getElementById('facilityForm').reset();
     document.getElementById('facilityId').value = '';
     document.getElementById('fac-parent-row').classList.add('hidden');
+    document.getElementById('fac-activitySearch').value = '';
+    document.getElementById('fac-activity').value = '';
     document.getElementById('facilityModal').classList.remove('hidden');
     document.getElementById('fac-name').focus();
 }
@@ -436,8 +672,11 @@ function openEditFacilityModal(id) {
     document.getElementById('fac-insuranceNumber').value       = f.insuranceNumber || '';
     document.getElementById('fac-nationalAddress').value       = f.nationalAddress || '';
     document.getElementById('fac-workLocation').value          = f.workLocation    || '';
-    document.getElementById('fac-accountName').value           = f.accountName     || '';
-    document.getElementById('fac-iban').value                  = f.iban            || '';
+    document.getElementById('fac-accountName').value           = f.accountName       || '';
+    document.getElementById('fac-iban').value                  = f.iban              || '';
+    document.getElementById('fac-activitySearch').value        = f.economicActivity  || '';
+    document.getElementById('fac-activity').value              = f.economicActivity  || '';
+    document.getElementById('fac-isic4').value                 = f.isic4             || '';
 
     const row = document.getElementById('fac-parent-row');
     if (f.type === 'فرعيه') {
@@ -474,6 +713,8 @@ function saveFacility() {
         workLocation:     get('fac-workLocation'),
         accountName:      get('fac-accountName'),
         iban:             get('fac-iban'),
+        economicActivity: document.getElementById('fac-activity').value.trim(),
+        isic4:            get('fac-isic4'),
         createdAt:        currentFacilityEditId
             ? (facilities.find(f => f.id === currentFacilityEditId)?.createdAt || new Date().toISOString())
             : new Date().toISOString(),
@@ -530,26 +771,56 @@ function populateFacilitySelect(selectId) {
 
 function renderAddEmployeePage() {
     document.getElementById('addEmpForm').reset();
+    document.getElementById('ae-contractFileList').innerHTML    = '';
+    document.getElementById('ae-additionalDocsList').innerHTML  = '';
+    document.getElementById('ae-photoPreview').innerHTML =
+        `<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
     populateFacilitySelect('ae-facilityId');
 }
 
-function submitAddEmployee() {
+async function submitAddEmployee() {
     const get = id => document.getElementById(id).value.trim();
     const name=get('ae-name'), code=get('ae-code'), nationalId=get('ae-nationalId'),
           nationality=get('ae-nationality'),
           empType=get('ae-empType'), facilityId=get('ae-facilityId'), salary=get('ae-salary');
-    if (!name||!code||!nationalId||!nationality||!empType||!facilityId||!salary) {
+    if (!name||!nationalId||!nationality||!empType||!facilityId||!salary) {
         showToast('يرجى ملء جميع الحقول المطلوبة', 'error'); return;
     }
-    if (employees.find(e => e.code === code)) { showToast('الرقم التوظيفي مستخدم بالفعل', 'error'); return; }
+    if (code && employees.find(e => e.code === code)) { showToast('الرقم التوظيفي مستخدم بالفعل', 'error'); return; }
     employees.push({
         id: uid(), name, code, nationalId, nationality, empType, facilityId,
         salary: parseFloat(salary), status: document.getElementById('ae-status').value,
         entryDate: get('ae-entryDate'), idExpiry: get('ae-idExpiry'),
+        workPermitNumber: get('ae-workPermitNumber'), workPermitExpiry: get('ae-workPermitExpiry'),
         bank: get('ae-bank'), iban: get('ae-iban'),
-        countryCode: get('ae-countryCode'), phone: get('ae-phone'), createdAt: new Date().toISOString(),
+        countryCode: get('ae-countryCode'), phone: get('ae-phone'),
+        photo: await (async () => {
+            const f = document.getElementById('ae-photo').files[0];
+            if (!f) return null;
+            if (f.size > MAX_FILE_SIZE) { showToast(`حجم الصورة يتجاوز ${MAX_FILE_MB}MB`, 'error'); return undefined; }
+            return readFileAsBase64(f);
+        })(),
+        jobTitle: get('ae-jobTitle'),
+        contractStatus: document.getElementById('ae-contractStatus').value,
+        contractType:   document.getElementById('ae-contractType').value,
+        contractFile:   await (async () => {
+            const f = document.getElementById('ae-contractFile').files[0];
+            if (!f) return null;
+            if (f.size > MAX_FILE_SIZE) { showToast(`حجم الملف يتجاوز ${MAX_FILE_MB}MB`, 'error'); return undefined; }
+            return readFileAsBase64(f);
+        })(),
+        additionalDocs: await (async () => {
+            const files = Array.from(document.getElementById('ae-additionalDocs').files);
+            const big = files.find(f => f.size > MAX_FILE_SIZE);
+            if (big) { showToast(`الملف "${big.name}" يتجاوز ${MAX_FILE_MB}MB`, 'error'); return undefined; }
+            return Promise.all(files.map(readFileAsBase64));
+        })(),
+        createdAt: new Date().toISOString(),
     });
-    save();
+    // abort if file size error (undefined signals error)
+    const last = employees[employees.length - 1];
+    if (last.photo === undefined || last.contractFile === undefined || last.additionalDocs === undefined) { employees.pop(); return; }
+    try { save(); } catch(e) { employees.pop(); showToast('مساحة التخزين ممتلئة، قلّل حجم الملفات', 'error'); return; }
     showToast('تم إضافة الموظف بنجاح', 'success');
     navigate('employees');
 }
@@ -559,6 +830,7 @@ function openEditModal(id) {
     const e = employees.find(x => x.id === id);
     if (!e) return;
     currentEditId = id;
+    _editRemovedDocs = new Set();
     populateFacilitySelect('empFacilityId');
     document.getElementById('modalTitle').textContent    = 'تعديل بيانات الموظف';
     document.getElementById('employeeId').value          = e.id;
@@ -571,34 +843,85 @@ function openEditModal(id) {
     document.getElementById('empSalary').value           = e.salary;
     document.getElementById('empStatus').value           = e.status;
     document.getElementById('empEntryDate').value        = e.entryDate    || '';
-    document.getElementById('empIdExpiry').value         = e.idExpiry     || '';
-    document.getElementById('empBank').value             = e.bank         || '';
+    document.getElementById('empIdExpiry').value         = e.idExpiry          || '';
+    document.getElementById('empWorkPermitNumber').value = e.workPermitNumber  || '';
+    document.getElementById('empWorkPermitExpiry').value = e.workPermitExpiry  || '';
+    document.getElementById('empBank').value             = e.bank              || '';
     document.getElementById('empIban').value             = e.iban         || '';
     document.getElementById('empCountryCode').value      = e.countryCode  || '';
     document.getElementById('empPhone').value            = e.phone        || '';
+    // Photo preview
+    const prevEl = document.getElementById('empPhotoPreview');
+    if (e.photo?.data) {
+        prevEl.innerHTML = `<img src="${e.photo.data}" alt="${e.name}">`;
+    } else {
+        prevEl.innerHTML = `<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
+    }
+    document.getElementById('empPhoto').value            = '';
+    document.getElementById('empJobTitle').value         = e.jobTitle        || '';
+    document.getElementById('empContractStatus').value   = e.contractStatus  || '';
+    document.getElementById('empContractType').value     = e.contractType    || '';
+    document.getElementById('empContractFile').value     = '';
+    document.getElementById('empAdditionalDocs').value   = '';
+    document.getElementById('emp-contractNewList').innerHTML  = '';
+    document.getElementById('emp-additionalNewList').innerHTML = '';
+    renderEditContractFile(e.contractFile || null);
+    renderEditAdditionalDocs(e.additionalDocs || []);
     document.getElementById('employeeModal').classList.remove('hidden');
 }
 
 function closeModal() { document.getElementById('employeeModal').classList.add('hidden'); }
 
-function saveEmployee() {
+async function saveEmployee() {
     const get = id => document.getElementById(id).value.trim();
     const name=get('empName'), code=get('empCode'), nationalId=get('empNationalId'),
           nationality=get('empNationality'),
           empType=get('empType'), facilityId=get('empFacilityId'), salary=get('empSalary');
-    if (!name||!code||!nationalId||!nationality||!empType||!facilityId||!salary) {
+    if (!name||!nationalId||!nationality||!empType||!facilityId||!salary) {
         showToast('يرجى ملء جميع الحقول المطلوبة', 'error'); return;
     }
-    if (employees.find(e => e.code === code && e.id !== currentEditId)) {
+    if (code && employees.find(e => e.code === code && e.id !== currentEditId)) {
         showToast('الرقم التوظيفي مستخدم بالفعل', 'error'); return;
     }
     const data = {
         id: currentEditId || uid(), name, code, nationalId, nationality, empType, facilityId,
         salary: parseFloat(salary), status: document.getElementById('empStatus').value,
         entryDate: get('empEntryDate'), idExpiry: get('empIdExpiry'),
+        workPermitNumber: get('empWorkPermitNumber'), workPermitExpiry: get('empWorkPermitExpiry'),
         bank: get('empBank'), iban: get('empIban'), countryCode: get('empCountryCode'), phone: get('empPhone'),
+        photo: await (async () => {
+            const existing = employees.find(e => e.id === currentEditId);
+            const f = document.getElementById('empPhoto').files[0];
+            if (f) {
+                if (f.size > MAX_FILE_SIZE) { showToast(`حجم الصورة يتجاوز ${MAX_FILE_MB}MB`, 'error'); return undefined; }
+                return readFileAsBase64(f);
+            }
+            return existing?.photo || null;
+        })(),
+        jobTitle:        get('empJobTitle'),
+        contractStatus:  document.getElementById('empContractStatus').value,
+        contractType:    document.getElementById('empContractType').value,
+        contractFile:    await (async () => {
+            const existing = employees.find(e => e.id === currentEditId);
+            const f = document.getElementById('empContractFile').files[0];
+            if (f) {
+                if (f.size > MAX_FILE_SIZE) { showToast(`حجم الملف يتجاوز ${MAX_FILE_MB}MB`, 'error'); return undefined; }
+                return readFileAsBase64(f);
+            }
+            return existing?.contractFile || null;
+        })(),
+        additionalDocs:  await (async () => {
+            const existing = employees.find(e => e.id === currentEditId);
+            const kept = (existing?.additionalDocs || []).filter(d => !_editRemovedDocs.has(d.name));
+            const newFiles = Array.from(document.getElementById('empAdditionalDocs').files);
+            const big = newFiles.find(f => f.size > MAX_FILE_SIZE);
+            if (big) { showToast(`الملف "${big.name}" يتجاوز ${MAX_FILE_MB}MB`, 'error'); return undefined; }
+            const added = await Promise.all(newFiles.map(readFileAsBase64));
+            return [...kept, ...added];
+        })(),
         createdAt: currentEditId ? (employees.find(e => e.id === currentEditId)?.createdAt || new Date().toISOString()) : new Date().toISOString(),
     };
+    if (data.photo === undefined || data.contractFile === undefined || data.additionalDocs === undefined) return;
     if (currentEditId) {
         employees[employees.findIndex(e => e.id === currentEditId)] = data;
         showToast('تم تعديل بيانات الموظف بنجاح', 'success');
@@ -606,7 +929,10 @@ function saveEmployee() {
         employees.push(data);
         showToast('تم إضافة الموظف بنجاح', 'success');
     }
-    save(); closeModal(); renderEmployees();
+    try { save(); } catch(e) { showToast('مساحة التخزين ممتلئة، قلّل حجم الملفات', 'error'); return; }
+    const onEmpDetailPage = !document.getElementById('page-employee-detail').classList.contains('hidden');
+    closeModal();
+    if (onEmpDetailPage) renderEmployeeDetail(); else renderEmployees();
 }
 
 // ===== Delete =====
@@ -620,8 +946,13 @@ function closeConfirmModal() {
 
 function confirmDeleteAction() {
     if (deleteMode === 'employee' && deleteTargetId) {
+        const wasCurrentEmployee = currentEmployeeId === deleteTargetId;
         employees = employees.filter(e => e.id !== deleteTargetId);
-        save(); renderEmployees(); showToast('تم حذف الموظف بنجاح', 'success');
+        save();
+        showToast('تم حذف الموظف بنجاح', 'success');
+        const onEmpDetail = !document.getElementById('page-employee-detail').classList.contains('hidden');
+        if (wasCurrentEmployee || onEmpDetail) navigate('employees');
+        else renderEmployees();
     } else if (deleteMode === 'facility' && deleteFacilityTargetId) {
         const wasCurrentFacility = currentFacilityId === deleteFacilityTargetId;
         facilities = facilities.filter(f => f.id !== deleteFacilityTargetId);
@@ -702,11 +1033,67 @@ document.addEventListener('DOMContentLoaded', () => {
         if (delBtn)  { openConfirmDeleteFacility(delBtn.dataset.facDelete); return; }
     });
 
+    // Employee detail page delegated
+    document.getElementById('page-employee-detail').addEventListener('click', e => {
+        if (e.target.closest('#backToEmployeesBtn'))    { navigate('employees'); return; }
+        if (e.target.closest('#editEmployeeDetailBtn')) { openEditModal(currentEmployeeId); return; }
+        if (e.target.closest('#deleteEmployeeDetailBtn')) {
+            deleteTargetId = currentEmployeeId; deleteMode = 'employee';
+            document.getElementById('confirmModal').classList.remove('hidden');
+            return;
+        }
+    });
+
     // Employee modal
     document.getElementById('saveEmployeeBtn').addEventListener('click', saveEmployee);
     document.getElementById('closeModalBtn').addEventListener('click', closeModal);
     document.getElementById('cancelModalBtn').addEventListener('click', closeModal);
-    document.getElementById('employeeModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+    document.getElementById('employeeModal').addEventListener('click', e => {
+        if (e.target === e.currentTarget) { closeModal(); return; }
+        const delBtn = e.target.closest('[data-doc-key]');
+        if (delBtn) {
+            _editRemovedDocs.add(delBtn.dataset.docKey);
+            const emp = employees.find(x => x.id === currentEditId);
+            renderEditAdditionalDocs(emp?.additionalDocs || []);
+        }
+    });
+
+    // Photo preview — add page
+    document.getElementById('ae-photo').addEventListener('change', function() {
+        const preview = document.getElementById('ae-photoPreview');
+        if (this.files[0]) {
+            const url = URL.createObjectURL(this.files[0]);
+            preview.innerHTML = `<img src="${url}" alt="صورة الموظف">`;
+        }
+    });
+    // Photo preview — edit modal
+    document.getElementById('empPhoto').addEventListener('change', function() {
+        const preview = document.getElementById('empPhotoPreview');
+        if (this.files[0]) {
+            const url = URL.createObjectURL(this.files[0]);
+            preview.innerHTML = `<img src="${url}" alt="صورة الموظف">`;
+        }
+    });
+
+    // File preview — add page
+    document.getElementById('ae-contractFile').addEventListener('change', function() {
+        document.getElementById('ae-contractFileList').innerHTML =
+            this.files[0] ? filePendingHTML(this.files[0].name) : '';
+    });
+    document.getElementById('ae-additionalDocs').addEventListener('change', function() {
+        document.getElementById('ae-additionalDocsList').innerHTML =
+            Array.from(this.files).map(f => filePendingHTML(f.name)).join('');
+    });
+
+    // File preview — edit modal
+    document.getElementById('empContractFile').addEventListener('change', function() {
+        document.getElementById('emp-contractNewList').innerHTML =
+            this.files[0] ? filePendingHTML(this.files[0].name) : '';
+    });
+    document.getElementById('empAdditionalDocs').addEventListener('change', function() {
+        document.getElementById('emp-additionalNewList').innerHTML =
+            Array.from(this.files).map(f => filePendingHTML(f.name)).join('');
+    });
 
     // Confirm delete
     document.getElementById('confirmDeleteBtn').addEventListener('click', confirmDeleteAction);
@@ -716,10 +1103,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Employee list delegated
     document.getElementById('employeesList').addEventListener('click', e => {
-        const editBtn  = e.target.closest('[data-edit]');
+        const editBtn   = e.target.closest('[data-edit]');
         const deleteBtn = e.target.closest('[data-delete]');
-        if (editBtn)   openEditModal(editBtn.dataset.edit);
-        if (deleteBtn) openConfirmDelete(deleteBtn.dataset.delete);
+        if (editBtn)   { openEditModal(editBtn.dataset.edit); return; }
+        if (deleteBtn) { openConfirmDelete(deleteBtn.dataset.delete); return; }
+        const row = e.target.closest('tr[data-emp-id]');
+        if (row) navigateToEmployee(row.dataset.empId);
     });
 
     document.getElementById('menuToggle').addEventListener('click', () => {
@@ -735,6 +1124,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('keydown', e => {
         if (e.key === 'Escape') { closeModal(); closeFacilityModal(); closeConfirmModal(); }
     });
+
+    initSearchableSelect('fac-activitySearch', 'fac-activityDropdown', 'fac-activity', ECONOMIC_ACTIVITIES);
 
     if (employees.length === 0 && facilities.length === 0) loadSampleData();
     dashboard();

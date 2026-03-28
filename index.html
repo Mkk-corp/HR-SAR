@@ -215,14 +215,27 @@
                     <div class="card form-card">
                         <div class="card-header"><h3>البيانات الشخصية</h3></div>
                         <div class="card-body">
+                            <div class="photo-upload-area">
+                                <div class="photo-preview-circle" id="ae-photoPreview">
+                                    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                </div>
+                                <div class="photo-upload-info">
+                                    <label for="ae-photo" class="file-upload-btn">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                        رفع صورة الموظف
+                                    </label>
+                                    <input type="file" id="ae-photo" class="file-input-hidden" accept="image/*">
+                                    <p class="file-upload-hint">JPG, PNG — بحد أقصى 2MB</p>
+                                </div>
+                            </div>
                             <div class="form-grid">
                                 <div class="form-group">
                                     <label>الاسم <span class="required">*</span></label>
                                     <input type="text" id="ae-name" required placeholder="الاسم الكامل">
                                 </div>
                                 <div class="form-group">
-                                    <label>الرقم التوظيفي <span class="required">*</span></label>
-                                    <input type="text" id="ae-code" required placeholder="مثال: EMP-001">
+                                    <label>الرقم التوظيفي</label>
+                                    <input type="text" id="ae-code" placeholder="مثال: EMP-001">
                                 </div>
                                 <div class="form-group">
                                     <label>رقم الهوية الوطني <span class="required">*</span></label>
@@ -247,6 +260,14 @@
                                 <div class="form-group">
                                     <label>تاريخ دخول المملكة</label>
                                     <input type="date" id="ae-entryDate">
+                                </div>
+                                <div class="form-group">
+                                    <label>رقم رخصة العمل</label>
+                                    <input type="text" id="ae-workPermitNumber" placeholder="رقم رخصة العمل">
+                                </div>
+                                <div class="form-group">
+                                    <label>تاريخ انتهاء رخصة العمل</label>
+                                    <input type="date" id="ae-workPermitExpiry">
                                 </div>
                             </div>
                         </div>
@@ -306,6 +327,65 @@
                         </div>
                     </div>
 
+                    <!-- بيانات العقد والمستندات -->
+                    <div class="card form-card">
+                        <div class="card-header"><h3>بيانات العقد والمستندات</h3></div>
+                        <div class="card-body">
+                            <div class="form-grid">
+                                <div class="form-group form-span-2">
+                                    <label>المسمى الوظيفي</label>
+                                    <input type="text" id="ae-jobTitle" placeholder="مثال: مهندس برمجيات، محاسب...">
+                                </div>
+                                <div class="form-group">
+                                    <label>حالة العقد</label>
+                                    <select id="ae-contractStatus">
+                                        <option value="">اختر...</option>
+                                        <option value="ساري">ساري</option>
+                                        <option value="منتهي">منتهي</option>
+                                        <option value="موقوف">موقوف</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>نوع العقد</label>
+                                    <select id="ae-contractType">
+                                        <option value="">اختر...</option>
+                                        <option value="دوام كامل">دوام كامل</option>
+                                        <option value="جزئي">جزئي</option>
+                                        <option value="مؤقت">مؤقت</option>
+                                    </select>
+                                </div>
+                                <div class="form-group form-span-2">
+                                    <label>عقد العمل</label>
+                                    <div class="file-upload-wrap">
+                                        <div class="file-upload-top">
+                                            <label for="ae-contractFile" class="file-upload-btn">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                                اختر ملفاً
+                                            </label>
+                                            <span class="file-upload-hint">PDF, Word, صورة — بحد أقصى 2MB</span>
+                                        </div>
+                                        <input type="file" id="ae-contractFile" class="file-input-hidden" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+                                        <div class="file-list" id="ae-contractFileList"></div>
+                                    </div>
+                                </div>
+                                <div class="form-group form-span-2">
+                                    <label>مستندات إضافية</label>
+                                    <div class="file-upload-wrap">
+                                        <div class="file-upload-top">
+                                            <label for="ae-additionalDocs" class="file-upload-btn">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                                اختر ملفات
+                                            </label>
+                                            <span class="file-upload-hint">يمكن اختيار عدة ملفات — بحد أقصى 2MB لكل ملف</span>
+                                        </div>
+                                        <input type="file" id="ae-additionalDocs" class="file-input-hidden" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" multiple>
+                                        <div class="file-list" id="ae-additionalDocsList"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="form-actions-bar">
                         <button type="button" class="btn btn-secondary" id="ae-cancelBtn">إلغاء</button>
                         <button type="button" class="btn btn-primary" id="ae-saveBtn">
@@ -351,6 +431,14 @@
                         <button class="btn btn-primary" id="emptyAddFacilityBtn">إضافة منشأة جديدة</button>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Employee Detail Page -->
+        <div class="page hidden" id="page-employee-detail">
+            <div class="detail-wrapper">
+                <div class="detail-breadcrumb" id="employeeBreadcrumb"></div>
+                <div id="employeeDetailContent"></div>
             </div>
         </div>
 
@@ -452,6 +540,21 @@
                         <input type="text" id="fac-iban" placeholder="SA00 0000 0000 0000 0000 0000" dir="ltr">
                     </div>
                 </div>
+                <div class="form-section-label">نطاق العمل للكيان</div>
+                <div class="form-grid">
+                    <div class="form-group form-span-2">
+                        <label>النشاط الاقتصادي الفرعي</label>
+                        <div class="searchable-select">
+                            <input type="text" id="fac-activitySearch" placeholder="ابحث عن النشاط الاقتصادي..." autocomplete="off">
+                            <input type="hidden" id="fac-activity">
+                            <div class="searchable-select-dropdown hidden" id="fac-activityDropdown"></div>
+                        </div>
+                    </div>
+                    <div class="form-group form-span-2">
+                        <label>النشاط الاقتصادي للمنشأة — كود ISIC4</label>
+                        <input type="text" id="fac-isic4" placeholder="مثال: 4711">
+                    </div>
+                </div>
             </form>
         </div>
         <div class="modal-footer">
@@ -478,14 +581,27 @@
                 <input type="hidden" id="employeeId">
 
                 <div class="form-section-label">البيانات الشخصية</div>
+                <div class="photo-upload-area" style="margin-bottom:14px">
+                    <div class="photo-preview-circle" id="empPhotoPreview">
+                        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    </div>
+                    <div class="photo-upload-info">
+                        <label for="empPhoto" class="file-upload-btn">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                            تغيير الصورة
+                        </label>
+                        <input type="file" id="empPhoto" class="file-input-hidden" accept="image/*">
+                        <p class="file-upload-hint">JPG, PNG — بحد أقصى 2MB</p>
+                    </div>
+                </div>
                 <div class="form-grid">
                     <div class="form-group">
                         <label>الاسم <span class="required">*</span></label>
                         <input type="text" id="empName" required placeholder="الاسم الكامل">
                     </div>
                     <div class="form-group">
-                        <label>الرقم التوظيفي <span class="required">*</span></label>
-                        <input type="text" id="empCode" required placeholder="مثال: EMP-001">
+                        <label>الرقم التوظيفي</label>
+                        <input type="text" id="empCode" placeholder="مثال: EMP-001">
                     </div>
                     <div class="form-group">
                         <label>رقم الهوية الوطني <span class="required">*</span></label>
@@ -510,6 +626,14 @@
                     <div class="form-group">
                         <label>تاريخ دخول المملكة</label>
                         <input type="date" id="empEntryDate">
+                    </div>
+                    <div class="form-group">
+                        <label>رقم رخصة العمل</label>
+                        <input type="text" id="empWorkPermitNumber" placeholder="رقم رخصة العمل">
+                    </div>
+                    <div class="form-group">
+                        <label>تاريخ انتهاء رخصة العمل</label>
+                        <input type="date" id="empWorkPermitExpiry">
                     </div>
                 </div>
 
@@ -554,6 +678,62 @@
                     <div class="form-group">
                         <label>رقم الهاتف</label>
                         <input type="tel" id="empPhone" placeholder="5XXXXXXXX" dir="ltr">
+                    </div>
+                </div>
+
+                <div class="form-section-label">بيانات العقد والمستندات</div>
+                <div class="form-grid">
+                    <div class="form-group form-span-2">
+                        <label>المسمى الوظيفي</label>
+                        <input type="text" id="empJobTitle" placeholder="مثال: مهندس برمجيات، محاسب...">
+                    </div>
+                    <div class="form-group">
+                        <label>حالة العقد</label>
+                        <select id="empContractStatus">
+                            <option value="">اختر...</option>
+                            <option value="ساري">ساري</option>
+                            <option value="منتهي">منتهي</option>
+                            <option value="موقوف">موقوف</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>نوع العقد</label>
+                        <select id="empContractType">
+                            <option value="">اختر...</option>
+                            <option value="دوام كامل">دوام كامل</option>
+                            <option value="جزئي">جزئي</option>
+                            <option value="مؤقت">مؤقت</option>
+                        </select>
+                    </div>
+                    <div class="form-group form-span-2">
+                        <label>عقد العمل</label>
+                        <div class="file-upload-wrap">
+                            <div class="file-list" id="emp-contractFileList"></div>
+                            <div class="file-upload-top" style="margin-top:8px">
+                                <label for="empContractFile" class="file-upload-btn">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                    استبدال الملف
+                                </label>
+                                <span class="file-upload-hint">PDF, Word, صورة — بحد أقصى 2MB</span>
+                            </div>
+                            <input type="file" id="empContractFile" class="file-input-hidden" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+                            <div class="file-list" id="emp-contractNewList"></div>
+                        </div>
+                    </div>
+                    <div class="form-group form-span-2">
+                        <label>مستندات إضافية</label>
+                        <div class="file-upload-wrap">
+                            <div class="file-list" id="emp-additionalDocsList"></div>
+                            <div class="file-upload-top" style="margin-top:8px">
+                                <label for="empAdditionalDocs" class="file-upload-btn">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                    إضافة مستندات
+                                </label>
+                                <span class="file-upload-hint">يمكن إضافة عدة ملفات — بحد أقصى 2MB لكل ملف</span>
+                            </div>
+                            <input type="file" id="empAdditionalDocs" class="file-input-hidden" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" multiple>
+                            <div class="file-list" id="emp-additionalNewList"></div>
+                        </div>
                     </div>
                 </div>
 
@@ -604,6 +784,7 @@
 <!-- Sidebar overlay (mobile) -->
 <div class="sidebar-overlay hidden" id="sidebarOverlay"></div>
 
+<script src="js/activities.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>
