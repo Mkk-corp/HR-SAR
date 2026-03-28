@@ -376,6 +376,8 @@ function renderFacilityDetail() {
                 </button>
             </div>
             <div class="card-body">
+                <div class="fac-info-with-tree">
+                <div class="fac-info-main">
                 <div class="info-grid">
                     ${infoItem('الرقم الوطني الموحد', f.nationalNumber)}
                     ${infoItem('رقم السجل التجاري', f.crNumber)}
@@ -410,6 +412,9 @@ function renderFacilityDetail() {
                             </a>
                         </span>
                     </div>` : ''}
+                </div><!-- /fac-info-main -->
+                ${facilityTreeHTML(f)}
+                </div><!-- /fac-info-with-tree -->
             </div>
         </div>`;
 
@@ -595,6 +600,44 @@ function renderEmployeeDetail() {
                 </div>` : ''}
             </div>
         </div>` : ''}`;
+}
+
+// ===== Facility Hierarchy Tree =====
+function facilityTreeHTML(f) {
+    const isMain = f.type === 'اساسية';
+    const isSub  = f.type === 'فرعيه' && f.parentId;
+    if (!isMain && !isSub) return '';
+    let rootFac, children, currentId;
+    if (isMain) {
+        children = facilities.filter(x => x.parentId === f.id);
+        if (!children.length) return '';
+        rootFac = f; currentId = f.id;
+    } else {
+        rootFac = getFacility(f.parentId);
+        if (!rootFac) return '';
+        children = facilities.filter(x => x.parentId === f.parentId);
+        currentId = f.id;
+    }
+    const rootActive = rootFac.id === currentId;
+    const childrenHTML = children.map(c => {
+        const active = c.id === currentId;
+        return `<div class="fac-tree-child">
+            <div class="fac-tree-node ${active ? 'fac-tree-current' : 'clickable'}" ${!active ? `data-facility="${c.id}"` : ''}>
+                <span class="fac-tree-dot"></span><span>${c.name}</span>
+                ${active ? '<span class="fac-tree-badge">الحالي</span>' : ''}
+            </div>
+        </div>`;
+    }).join('');
+    return `<div class="fac-tree-panel">
+        <div class="fac-tree-panel-title">هيكل المنشآت</div>
+        <div class="fac-tree">
+            <div class="fac-tree-node ${rootActive ? 'fac-tree-current' : 'clickable'}" ${!rootActive ? `data-facility="${rootFac.id}"` : ''}>
+                <span class="fac-tree-dot"></span><span>${rootFac.name}</span>
+                ${rootActive ? '<span class="fac-tree-badge">الحالي</span>' : ''}
+            </div>
+            <div class="fac-tree-children">${childrenHTML}</div>
+        </div>
+    </div>`;
 }
 
 // ===== Facility Modal =====

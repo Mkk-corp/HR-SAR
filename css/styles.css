@@ -1284,6 +1284,23 @@ input, select, textarea { font-family: var(--font); }
     background: #F8FAFC;
 }
 
+/* ======= Facility Hierarchy Tree ======= */
+.fac-info-with-tree { display: flex; gap: 24px; align-items: flex-start; }
+.fac-info-main { flex: 1; min-width: 0; }
+.fac-tree-panel { flex-shrink: 0; background: var(--border-light, #F1F5F9); border-radius: var(--radius-sm, 8px); padding: 12px 14px; border: 1px solid var(--border); min-width: 170px; }
+.fac-tree-panel-title { font-size: 11px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: .4px; margin-bottom: 10px; }
+.fac-tree { font-size: 12.5px; direction: rtl; }
+.fac-tree-node { display: inline-flex; align-items: center; gap: 6px; padding: 5px 8px; border-radius: 7px; white-space: nowrap; }
+.fac-tree-node.clickable { cursor: pointer; }
+.fac-tree-node.clickable:hover { background: var(--primary-light); color: var(--primary); }
+.fac-tree-node.fac-tree-current { background: var(--primary-light); color: var(--primary); font-weight: 600; }
+.fac-tree-dot { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid currentColor; flex-shrink: 0; }
+.fac-tree-current .fac-tree-dot { background: var(--primary); border-color: var(--primary); }
+.fac-tree-badge { font-size: 10px; padding: 1px 6px; background: var(--primary); color: #fff; border-radius: 10px; }
+.fac-tree-children { margin-right: 16px; padding-right: 14px; border-right: 1.5px solid var(--border); display: flex; flex-direction: column; gap: 2px; margin-top: 2px; }
+.fac-tree-child { position: relative; }
+.fac-tree-child::before { content: ''; position: absolute; right: -14px; top: 50%; width: 14px; height: 1.5px; background: var(--border); }
+
 /* ======= Facility Detail Page ======= */
 .detail-wrapper {
     max-width: 960px;
