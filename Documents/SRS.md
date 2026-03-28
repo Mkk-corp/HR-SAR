@@ -267,6 +267,7 @@ return ms && (!facId || e.facilityId === facId) && (!status || e.status === stat
 |---|---|
 | `#facilityBreadcrumb` | مسار التنقل: المنشآت › [الأب؟] › الاسم |
 | `#facilityInfoCard` | بطاقة بيانات المنشأة كاملة مع زر تعديل |
+| `#saudizationCard` | بطاقة حساب نسبة السعودة (Nitaqat) — تُعرض دائماً بعد بطاقة المعلومات |
 | `#subFacilitiesCard` | جدول المنشآت الفرعية (يظهر فقط إذا `type === 'اساسية'`) |
 | `#facilityEmployeesCard` | جدول الموظفين المرتبطين بهذه المنشأة |
 
@@ -281,6 +282,11 @@ return ms && (!facId || e.facilityId === facId) && (!status || e.status === stat
 - العقد الأخرى تحمل `data-facility="id"` وتفتح صفحتها عبر تفويض الأحداث
 - تُعرض جانبياً بجوار بيانات المنشأة عبر `.fac-info-with-tree` / `.fac-info-main`
 - إذا لم تتحقق الشروط (منشأة منفردة أو بلا أبناء) تُعيد نصاً فارغاً ولا تظهر اللوحة
+
+**بطاقة السعودة (`renderSaudizationCard(f)`):**
+- تُستدعى مباشرة داخل `renderFacilityDetail()` بعد بطاقة المعلومات
+- تعتمد على `calculateSaudizationRate(f)` لحساب النتيجة
+- ترسم في `#saudizationCard`
 
 **زر "إضافة فرعية":** يستدعي `openAddSubFacilityModal(currentFacilityId)` — يُعبِّئ النموذج مسبقاً بالنوع `فرعيه` والأب المحدد وجميع بيانات الأب.
 
@@ -313,7 +319,40 @@ if (onDetail) renderFacilityDetail(); else renderFacilities();
 
 يُعبِّئ النموذج بجميع بيانات الموظف ويحفظ التعديلات في مكان السجل الأصلي (by index).
 
-### 7.8 مودال تأكيد الحذف
+### 7.8.0 حساب نسبة السعودة (Nitaqat)
+
+**الملف:** `js/nitaqat_lookup.js` (محمَّل قبل `app.js`)
+
+**الدوال:**
+
+| الدالة | الوصف |
+|---|---|
+| `getNitaqatBand(isic4, activityName)` | يُرجع بيانات نطاقات (yellowMin, greenMin, platinumMin, name) بناءً على كود ISIC4 أولاً ثم مطابقة كلمات مفتاحية ثم القيمة الافتراضية |
+| `calculateSaudizationRate(f)` | يحسب نسبة التوطين للمنشأة f — يُرجع كائناً بـ `{state, saudis, nonSaudis, total, rate, band, category, compliant}` |
+| `renderSaudizationCard(f)` | يرسم بطاقة النتيجة في `#saudizationCard` — تُستدعى داخل `renderFacilityDetail()` |
+
+**حالات `state`:**
+
+| القيمة | المعنى | العرض |
+|---|---|---|
+| `'no-employees'` | إجمالي الموظفين = 0 | رسالة: "لا توجد بيانات موظفين لحساب نسبة السعودة" |
+| `'no-activity'` | لا يوجد نشاط اقتصادي | رسالة: "الرجاء تحديد النشاط الاقتصادي للمنشأة لحساب التوطين" |
+| `'ok'` | بيانات مكتملة | تُعرض البطاقة الكاملة |
+
+**منطق تحديد الفئة:**
+```javascript
+if      (rate >= band.platinumMin && band.platinumMin > 0) → 'platinum'
+else if (rate >= band.greenMin)                            → 'green'
+else if (rate >= band.yellowMin)                           → 'yellow'
+else                                                       → 'red'
+compliant = rate >= band.greenMin
+```
+
+**مصدر البيانات:** `NITAQAT_SECTIONS` (22 قسم ISIC4) + `NITAQAT_KEYWORDS` (100+ كلمة مفتاحية عربية) + `NITAQAT_DEFAULT` (20% green, 35% platinum)
+
+**ألوان الفئات:** أحمر `#B91C1C` / أصفر `#A16207` / أخضر `#15803D` / بلاتيني `#0D9488`
+
+### 7.9 مودال تأكيد الحذف
 
 **الدوال:** `openConfirmDelete(id)`, `openConfirmDeleteFacility(id)`, `confirmDeleteAction()`, `closeConfirmModal()`
 
@@ -342,6 +381,9 @@ else                    renderFacilities();            // حُذفت من قائ
 | `showToast(msg, type)` | يعرض رسالة إشعار مؤقتة (3 ثوانٍ) |
 | `infoItem(label, value)` | يُرجع HTML عنصر في شبكة معلومات المنشأة، مع كشف الروابط |
 | `populateFacilitySelect(selectId)` | يُعبِّئ قائمة المنشآت في أي `<select>` |
+| `getNitaqatBand(isic4, activityName)` | يُرجع بيانات الشريحة المرجعية (Nitaqat) للنشاط الاقتصادي |
+| `calculateSaudizationRate(f)` | يحسب نسبة التوطين وفئة نطاقات للمنشأة |
+| `renderSaudizationCard(f)` | يرسم بطاقة نسبة السعودة في صفحة تفاصيل المنشأة |
 
 ---
 

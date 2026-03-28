@@ -418,6 +418,9 @@ function renderFacilityDetail() {
             </div>
         </div>`;
 
+    // Saudization card
+    renderSaudizationCard(f);
+
     // Sub-facilities card (only for main)
     const subEl = document.getElementById('subFacilitiesCard');
     if (f.type === 'اساسية') {
@@ -600,6 +603,117 @@ function renderEmployeeDetail() {
                 </div>` : ''}
             </div>
         </div>` : ''}`;
+}
+
+// ===== Saudization (Nitaqat) =====
+function calculateSaudizationRate(f) {
+    const facEmps = employees.filter(e => e.facilityId === f.id);
+    const total   = facEmps.length;
+    const saudis  = facEmps.filter(e => e.empType === 'سعودي').length;
+    const nonSaudis = total - saudis;
+
+    if (total === 0)                       return { state: 'no-employees', saudis, nonSaudis, total };
+    if (!f.economicActivity && !f.isic4)   return { state: 'no-activity',  saudis, nonSaudis, total };
+
+    const rate  = (saudis / total) * 100;
+    const band  = getNitaqatBand(f.isic4, f.economicActivity);
+
+    let category;
+    if      (rate >= band.platinumMin && band.platinumMin > 0) category = 'platinum';
+    else if (rate >= band.greenMin)                            category = 'green';
+    else if (rate >= band.yellowMin)                           category = 'yellow';
+    else                                                       category = 'red';
+
+    const compliant = rate >= band.greenMin;
+    return { state: 'ok', saudis, nonSaudis, total, rate, band, category, compliant };
+}
+
+function renderSaudizationCard(f) {
+    const el = document.getElementById('saudizationCard');
+    if (!el) return;
+
+    const result = calculateSaudizationRate(f);
+
+    if (result.state === 'no-employees') {
+        el.innerHTML = `<div class="card" style="margin-bottom:18px">
+            <div class="card-header"><h3>نسبة التوطين <span style="color:#94A3B8;font-weight:400;font-size:12px">(نطاقات)</span></h3></div>
+            <div class="card-body"><div class="nitaqat-empty">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <p>لا توجد بيانات موظفين لحساب نسبة السعودة</p>
+            </div></div></div>`;
+        return;
+    }
+
+    if (result.state === 'no-activity') {
+        el.innerHTML = `<div class="card" style="margin-bottom:18px">
+            <div class="card-header"><h3>نسبة التوطين <span style="color:#94A3B8;font-weight:400;font-size:12px">(نطاقات)</span></h3></div>
+            <div class="card-body"><div class="nitaqat-empty">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                <p>الرجاء تحديد النشاط الاقتصادي للمنشأة لحساب التوطين</p>
+            </div></div></div>`;
+        return;
+    }
+
+    const { saudis, nonSaudis, total, rate, band, category, compliant } = result;
+    const rateStr  = rate.toFixed(1);
+    const badgeLabel = { platinum: 'بلاتيني', green: 'أخضر', yellow: 'أصفر', red: 'أحمر' };
+    const fillPct    = Math.min(rate, 100).toFixed(1);
+    const markerPct  = Math.min(band.greenMin, 100);
+    const checkIcon  = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`;
+    const crossIcon  = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+    const summaryMsg = compliant
+        ? 'المنشأة مستوفية الحد الأدنى لنسبة السعودة المطلوبة للنشاط المختار.'
+        : `نسبة السعودة أقل من الحد الأدنى المطلوب (${band.greenMin}%) — يجب رفع عدد الموظفين السعوديين.`;
+
+    el.innerHTML = `<div class="card" style="margin-bottom:18px">
+        <div class="card-header">
+            <h3>نسبة التوطين <span style="color:#94A3B8;font-weight:400;font-size:12px">(نطاقات)</span></h3>
+            <span class="nitaqat-badge nitaqat-badge-${category}">${badgeLabel[category]}</span>
+        </div>
+        <div class="card-body">
+            <div class="nitaqat-stats">
+                <div class="nitaqat-stat nitaqat-stat-saudi">
+                    <span class="nitaqat-stat-val">${saudis}</span>
+                    <span class="nitaqat-stat-label">سعوديون</span>
+                </div>
+                <div class="nitaqat-stat nitaqat-stat-non">
+                    <span class="nitaqat-stat-val">${nonSaudis}</span>
+                    <span class="nitaqat-stat-label">غير سعوديين</span>
+                </div>
+                <div class="nitaqat-stat nitaqat-stat-total">
+                    <span class="nitaqat-stat-val">${total}</span>
+                    <span class="nitaqat-stat-label">إجمالي الموظفين</span>
+                </div>
+            </div>
+            <div class="nitaqat-rate-row">
+                <div class="nitaqat-pct-wrap">
+                    <span class="nitaqat-pct nitaqat-pct-${category}">${rateStr}%</span>
+                    <span class="nitaqat-pct-label">نسبة السعودة الفعلية</span>
+                </div>
+                <div class="nitaqat-min-wrap">
+                    <span class="nitaqat-min-val">${band.greenMin}%</span>
+                    <span class="nitaqat-min-label">الحد الأدنى المطلوب</span>
+                </div>
+            </div>
+            <div class="nitaqat-progress-wrap">
+                <div class="nitaqat-progress">
+                    <div class="nitaqat-progress-fill nitaqat-fill-${category}" style="width:${fillPct}%"></div>
+                    <div class="nitaqat-progress-marker" style="left:${markerPct}%" data-label="${band.greenMin}%"></div>
+                </div>
+                <div class="nitaqat-progress-labels">
+                    <span>0%</span>
+                    <span>${band.greenMin}% (الحد الأدنى)</span>
+                    <span>100%</span>
+                </div>
+            </div>
+            <div class="nitaqat-status nitaqat-status-${compliant ? 'ok' : 'fail'}">
+                ${compliant ? checkIcon : crossIcon}
+                <span>${compliant ? 'مقبول' : 'غير مقبول'}</span>
+                <span class="nitaqat-summary">${summaryMsg}</span>
+            </div>
+            ${band.name ? `<p class="nitaqat-activity-note">النشاط الاقتصادي: ${band.name}</p>` : ''}
+        </div>
+    </div>`;
 }
 
 // ===== Facility Hierarchy Tree =====
