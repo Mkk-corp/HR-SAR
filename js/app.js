@@ -183,13 +183,16 @@ function initSearchableSelect(searchId, dropdownId, hiddenId, items) {
 
 // ===== Navigation =====
 const PAGE_TITLES = {
-    dashboard:         'لوحة التحكم',
-    employees:         'الموظفون',
-    'add-employee':    'إضافة موظف جديد',
-    facilities:        'المنشآت',
-    'facility-detail': 'تفاصيل المنشأة',
-    'employee-detail': 'بيانات الموظف',
-    reports:           'التقارير',
+    dashboard:           'لوحة التحكم',
+    employees:           'الموظفون',
+    'add-employee':      'إضافة موظف جديد',
+    facilities:          'المنشآت',
+    'facility-detail':   'تفاصيل المنشأة',
+    'employee-detail':   'بيانات الموظف',
+    reports:             'التقارير',
+    services:            'الخدمات',
+    transfers:           'خدمات النقل والتحويل',
+    'transfer-detail':   'تفاصيل طلب النقل',
 };
 
 function navigate(page) {
@@ -197,8 +200,10 @@ function navigate(page) {
     document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
 
     document.getElementById(`page-${page}`)?.classList.remove('hidden');
-    const navTarget = page === 'facility-detail' ? 'facilities'
+    const navTarget = page === 'facility-detail'  ? 'facilities'
                     : page === 'employee-detail'  ? 'employees'
+                    : page === 'transfers'        ? 'services'
+                    : page === 'transfer-detail'  ? 'services'
                     : page;
     document.querySelector(`[data-page="${navTarget}"]`)?.classList.add('active');
     document.getElementById('pageTitle').textContent = PAGE_TITLES[page] || '';
@@ -209,6 +214,8 @@ function navigate(page) {
         dashboard, employees: renderEmployees, 'add-employee': renderAddEmployeePage,
         facilities: renderFacilities, 'facility-detail': renderFacilityDetail,
         'employee-detail': renderEmployeeDetail, reports: renderReports,
+        services: renderServices,
+        transfers: renderTransfers, 'transfer-detail': renderTransferDetail,
     };
     renderers[page]?.();
 }
@@ -1286,4 +1293,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (employees.length === 0 && facilities.length === 0) loadSampleData();
     dashboard();
+
+    // Transfers module events (defined in transfers.js)
+    if (typeof initTransferEvents === 'function') initTransferEvents();
 });
