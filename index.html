@@ -11,6 +11,30 @@
 </head>
 <body>
 
+<!-- ===== LOGIN SCREEN ===== -->
+<div id="loginScreen" class="login-screen">
+    <div class="login-card">
+        <div class="login-logo">
+            <div class="logo-icon">HR</div>
+            <div class="login-title">نظام إدارة الموارد البشرية</div>
+        </div>
+        <form id="loginForm" onsubmit="handleLogin(event)">
+            <div class="form-group">
+                <label class="form-label">البريد الإلكتروني</label>
+                <input type="email" id="loginEmail" class="form-control" placeholder="admin@hr-sar.com" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">كلمة المرور</label>
+                <input type="password" id="loginPassword" class="form-control" placeholder="••••••••" required>
+            </div>
+            <p id="loginError" style="color:var(--danger);font-size:13px;min-height:18px"></p>
+            <button type="submit" id="loginBtn" class="btn btn-primary" style="width:100%">تسجيل الدخول</button>
+        </form>
+    </div>
+</div>
+
+<!-- ===== MAIN APP ===== -->
+<div id="appContainer" class="hidden">
 <div class="app-container">
 
     <!-- Sidebar -->
@@ -66,16 +90,40 @@
                         <span>الخدمات</span>
                     </a>
                 </li>
+                <li data-permission-tab="users.view">
+                    <a href="#" class="nav-link" data-page="users">
+                        <span class="nav-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>
+                        </span>
+                        <span>المستخدمون</span>
+                    </a>
+                </li>
+                <li data-permission-tab="roles.view">
+                    <a href="#" class="nav-link" data-page="roles">
+                        <span class="nav-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        </span>
+                        <span>الأدوار والصلاحيات</span>
+                    </a>
+                </li>
             </ul>
         </nav>
         <div class="sidebar-footer">
-            <div class="user-info">
-                <div class="user-avatar">م</div>
+            <div class="user-info" onclick="openProfileModal()" style="cursor:pointer;flex:1" title="الملف الشخصي">
+                <div class="user-avatar" id="currentUserAvatar">م</div>
                 <div class="user-details">
-                    <span class="user-name">مدير النظام</span>
-                    <span class="user-role">مسؤول</span>
+                    <span class="user-name" id="currentUserName">مدير النظام</span>
+                    <span class="user-role" id="currentUserRole">SuperAdmin</span>
                 </div>
             </div>
+            <button class="btn btn-sm" onclick="authManager.logout()" title="تسجيل الخروج"
+                style="background:transparent;color:var(--text-3);border:none;padding:.4rem;cursor:pointer">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                    <polyline points="16 17 21 12 16 7"/>
+                    <line x1="21" y1="12" x2="9" y2="12"/>
+                </svg>
+            </button>
         </div>
     </aside>
 
@@ -1056,6 +1104,271 @@
     </div>
 </div>
 
+<!-- ===== Users Page ===== -->
+<div class="page hidden" id="page-users">
+    <div class="page-header">
+        <h1 class="page-title-main">المستخدمون والحسابات</h1>
+        <button class="btn btn-primary" onclick="openCreateUserModal()" data-permission="users.create">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            إضافة مستخدم
+        </button>
+    </div>
+    <div class="card">
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>المستخدم</th>
+                        <th>البريد الإلكتروني</th>
+                        <th>الدور</th>
+                        <th>الحالة</th>
+                        <th>تاريخ الإنشاء</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="usersTableBody">
+                    <tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-3)">جاري التحميل...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Roles Page ===== -->
+<div class="page hidden" id="page-roles">
+    <div class="page-header">
+        <h1 class="page-title-main">الأدوار والصلاحيات</h1>
+        <button class="btn btn-primary" onclick="openCreateRoleModal()" data-permission="roles.create">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            إنشاء دور
+        </button>
+    </div>
+    <div class="card">
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>الدور</th>
+                        <th>الوصف</th>
+                        <th>الصلاحيات</th>
+                        <th>المستخدمون</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="rolesTableBody">
+                    <tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-3)">جاري التحميل...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ===== User Modal ===== -->
+<div class="modal-overlay hidden" id="userModal">
+    <div class="modal" style="max-width:500px">
+        <div class="modal-header">
+            <h2 id="userModalTitle">إضافة مستخدم</h2>
+            <button class="modal-close" onclick="closeUserModal()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <form id="userForm" onsubmit="saveUser(event)">
+            <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">الاسم الكامل <span class="required">*</span></label>
+                        <input type="text" id="userFullName" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">المسمى الوظيفي</label>
+                        <input type="text" id="userJobTitle" class="form-control">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">البريد الإلكتروني <span class="required">*</span></label>
+                    <input type="email" id="userEmail" class="form-control" required>
+                </div>
+                <div class="form-group" id="userPasswordGroup">
+                    <label class="form-label">كلمة المرور <span class="required">*</span></label>
+                    <input type="password" id="userPassword" class="form-control" minlength="8">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">الدور <span class="required">*</span></label>
+                    <select id="userRoleId" class="form-control" required>
+                        <option value="">— اختر دوراً —</option>
+                    </select>
+                </div>
+                <div class="form-group" id="userActiveGroup">
+                    <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer">
+                        <input type="checkbox" id="userIsActive" checked>
+                        مستخدم نشط
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeUserModal()">إلغاء</button>
+                <button type="submit" class="btn btn-primary">حفظ</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ===== Reset Password Modal ===== -->
+<div class="modal-overlay hidden" id="resetPwModal">
+    <div class="modal" style="max-width:420px">
+        <div class="modal-header">
+            <h2>إعادة تعيين كلمة المرور</h2>
+            <button class="modal-close" onclick="closeResetPasswordModal()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <form onsubmit="confirmResetPassword(event)">
+            <div class="modal-body">
+                <p style="margin-bottom:1rem">إعادة تعيين كلمة مرور: <strong id="resetPwUserName"></strong></p>
+                <div class="form-group">
+                    <label class="form-label">كلمة المرور الجديدة</label>
+                    <input type="password" id="resetNewPassword" class="form-control" minlength="8" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">تأكيد كلمة المرور</label>
+                    <input type="password" id="resetConfirmPassword" class="form-control" minlength="8" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeResetPasswordModal()">إلغاء</button>
+                <button type="submit" class="btn btn-primary">تعيين</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ===== Delete User Modal ===== -->
+<div class="modal-overlay hidden" id="deleteUserModal">
+    <div class="modal" style="max-width:400px">
+        <div class="modal-header">
+            <h2>حذف المستخدم</h2>
+            <button class="modal-close" onclick="closeDeleteUserModal()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <p>هل تريد حذف المستخدم <strong id="deleteUserName"></strong>؟ لا يمكن التراجع عن هذه العملية.</p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeDeleteUserModal()">إلغاء</button>
+            <button class="btn btn-danger" onclick="executeDeleteUser()">حذف</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Role Modal ===== -->
+<div class="modal-overlay hidden" id="roleModal">
+    <div class="modal" style="max-width:640px">
+        <div class="modal-header">
+            <h2 id="roleModalTitle">إنشاء دور</h2>
+            <button class="modal-close" onclick="closeRoleModal()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <form id="roleForm" onsubmit="saveRole(event)">
+            <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">اسم الدور <span class="required">*</span></label>
+                        <input type="text" id="roleName" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">الوصف</label>
+                        <input type="text" id="roleDescription" class="form-control">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" style="margin-bottom:.75rem">الصلاحيات</label>
+                    <div id="permissionsGrid" class="permissions-grid"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeRoleModal()">إلغاء</button>
+                <button type="submit" class="btn btn-primary">حفظ</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ===== Delete Role Modal ===== -->
+<div class="modal-overlay hidden" id="deleteRoleModal">
+    <div class="modal" style="max-width:400px">
+        <div class="modal-header">
+            <h2>حذف الدور</h2>
+            <button class="modal-close" onclick="closeDeleteRoleModal()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <p>هل تريد حذف الدور <strong id="deleteRoleName"></strong>؟</p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeDeleteRoleModal()">إلغاء</button>
+            <button class="btn btn-danger" onclick="executeDeleteRole()">حذف</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Profile Modal ===== -->
+<div class="modal-overlay hidden" id="profileModal">
+    <div class="modal" style="max-width:480px">
+        <div class="modal-header">
+            <h2>الملف الشخصي</h2>
+            <button class="modal-close" onclick="closeProfileModal()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <form onsubmit="saveProfile(event)">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">البريد الإلكتروني</label>
+                    <div id="profileEmail" style="padding:.5rem;color:var(--text-2)"></div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">الدور</label>
+                    <div id="profileRoles" style="padding:.5rem;color:var(--text-2)"></div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">الاسم الكامل</label>
+                    <input type="text" id="profileFullName" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">المسمى الوظيفي</label>
+                    <input type="text" id="profileJobTitle" class="form-control">
+                </div>
+                <div id="profileChangePwSection" class="hidden" style="border-top:1px solid var(--border);padding-top:1rem;margin-top:.5rem">
+                    <p style="font-weight:600;margin-bottom:.75rem">تغيير كلمة المرور</p>
+                    <div class="form-group">
+                        <label class="form-label">كلمة المرور الحالية</label>
+                        <input type="password" id="currentPassword" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">كلمة المرور الجديدة</label>
+                        <input type="password" id="newPassword" class="form-control" minlength="8">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">تأكيد كلمة المرور</label>
+                        <input type="password" id="confirmPassword" class="form-control">
+                    </div>
+                    <button type="button" class="btn btn-outline" onclick="changePassword(event)">تغيير كلمة المرور</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('profileChangePwSection').classList.toggle('hidden')">تغيير كلمة المرور</button>
+                <button type="button" class="btn btn-secondary" onclick="closeProfileModal()">إلغاء</button>
+                <button type="submit" class="btn btn-primary">حفظ</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+</div><!-- end appContainer -->
+
 <!-- Toast -->
 <div class="toast hidden" id="toast">
     <span class="toast-icon" id="toastIcon"></span>
@@ -1072,9 +1385,46 @@
     <img src="Assets/mkk_corp_logo.png" alt="MKK Corp" class="footer-logo">
 </footer>
 
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
 <script src="js/activities.js"></script>
 <script src="js/nitaqat_lookup.js"></script>
 <script src="js/app.js"></script>
 <script src="js/transfers.js"></script>
+<script src="js/users.js"></script>
+<script>
+// ===== Boot =====
+(async function boot() {
+    authManager.init();
+    if (!authManager.isLoggedIn()) {
+        showLoginScreen();
+        return;
+    }
+    hideLoginScreen();
+    applyPermissions();
+    await initApp();
+})();
+
+// ===== Page routing — hook users/roles pages =====
+const _origNavigateTo = typeof navigateTo === 'function' ? navigateTo : null;
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.nav-link[data-page]').forEach(link => {
+        link.addEventListener('click', async (e) => {
+            const page = link.dataset.page;
+            if (page === 'users') { e.preventDefault(); await showPage('users'); await loadUsersTab(); }
+            if (page === 'roles') { e.preventDefault(); await showPage('roles'); await loadRolesTab(); }
+        });
+    });
+});
+
+function showPage(name) {
+    document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+    const pg = document.getElementById(`page-${name}`);
+    if (pg) pg.classList.remove('hidden');
+    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+    const link = document.querySelector(`.nav-link[data-page="${name}"]`);
+    if (link) link.classList.add('active');
+}
+</script>
 </body>
 </html>

@@ -1713,3 +1713,60 @@ input, select, textarea { font-family: var(--font); }
     .tr-action-btns { width:100%; }
     .tr-action-btns .btn { flex:1; }
 }
+
+/* ============================
+   Auth & Users & Roles
+   ============================ */
+
+/* Login Screen */
+.login-screen {
+    position: fixed; inset: 0;
+    background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 9999;
+}
+.login-card {
+    background: var(--card);
+    border-radius: 16px;
+    box-shadow: 0 8px 40px rgba(0,0,0,.12);
+    padding: 2.5rem;
+    width: 100%; max-width: 400px;
+}
+.login-logo {
+    display: flex; align-items: center; gap: .75rem;
+    margin-bottom: 2rem;
+}
+.login-title { font-size: 1.1rem; font-weight: 600; color: var(--text-1); }
+
+/* Permissions Grid */
+.permissions-grid {
+    display: flex; flex-direction: column; gap: .75rem;
+    max-height: 380px; overflow-y: auto;
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: .75rem;
+}
+.perm-group { border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+.perm-group-header {
+    background: var(--bg); padding: .5rem .75rem;
+    border-bottom: 1px solid var(--border);
+}
+.perm-items {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(160px,1fr));
+    gap: .25rem; padding: .5rem .75rem;
+}
+.perm-item {
+    display: flex; align-items: center; gap: .4rem;
+    font-size: 13px; cursor: pointer; padding: .2rem .25rem;
+    border-radius: 4px;
+}
+.perm-item:hover { background: var(--primary-light); }
+
+/* Page header */
+.page-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 1.25rem;
+}
+.page-title-main { font-size: 1.25rem; font-weight: 700; color: var(--text-1); }
+
+/* Utility */
+.hidden { display: none !important; }
