@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("HR-SAR")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f37b3bc8502ca9965e4972809c3f35ad11bb5875")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+79ca14ae6ea1557a3711de4fed21f46c65c20f1f")]
 [assembly: System.Reflection.AssemblyProductAttribute("HR-SAR")]
 [assembly: System.Reflection.AssemblyTitleAttribute("HR-SAR")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
