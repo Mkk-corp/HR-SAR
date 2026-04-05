@@ -1,0 +1,6 @@
+@HR_SAR_HostAddress = http://localhost:5140
+
+GET {{HR_SAR_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
