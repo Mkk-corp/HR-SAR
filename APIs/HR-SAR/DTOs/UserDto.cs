@@ -9,7 +9,8 @@ public record UserDto(
     string? JobTitle,
     bool IsActive,
     string[] Roles,
-    DateTime CreatedAt
+    DateTime CreatedAt,
+    string? PhotoUrl = null
 );
 
 public record CreateUserDto(
@@ -17,7 +18,8 @@ public record CreateUserDto(
     [Required, MinLength(8)] string Password,
     [Required, MaxLength(200)] string FullName,
     [MaxLength(100)] string? JobTitle,
-    [Required] string RoleId
+    [Required] string RoleId,
+    string? PhotoUrl = null
 );
 
 public record UpdateUserDto(

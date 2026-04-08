@@ -1,8 +1,8 @@
 'use strict';
 
 // ===== State =====
-let employees  = JSON.parse(localStorage.getItem('hr_employees')  || '[]');
-let facilities = JSON.parse(localStorage.getItem('hr_facilities') || '[]');
+let employees  = [];
+let facilities = [];
 let currentEditId          = null;
 let currentFacilityEditId  = null;
 let currentFacilityId      = null;
@@ -20,12 +20,6 @@ const AVATAR_COLORS = [
 // ===== Helpers =====
 function uid() {
     return 'e' + Date.now() + Math.random().toString(36).slice(2, 7);
-}
-function save() {
-    localStorage.setItem('hr_employees', JSON.stringify(employees));
-}
-function saveFacilities() {
-    localStorage.setItem('hr_facilities', JSON.stringify(facilities));
 }
 function getFacility(id) {
     return facilities.find(f => f.id === id);
@@ -77,6 +71,42 @@ function infoItem(label, value) {
     return `<div class="info-item"><span class="info-label">${label}</span><span class="info-value">${display}</span></div>`;
 }
 
+// ===== localStorage Extras (photo, documents, extra fields) =====
+// Fields not stored in the API are kept in localStorage per-entity.
+function getEmpExtras(id) {
+    return JSON.parse(localStorage.getItem(`hr_emp_ex_${id}`) || '{}');
+}
+function saveEmpExtras(id, data) {
+    const keys = ['photo','contractFile','additionalDocs','workPermitNumber','workPermitExpiry','contractStatus','contractType'];
+    const ex = {};
+    keys.forEach(k => { if (k in data) ex[k] = data[k]; });
+    try { localStorage.setItem(`hr_emp_ex_${id}`, JSON.stringify(ex)); } catch(e) {}
+}
+function enrichEmployee(emp) {
+    return { ...emp, ...getEmpExtras(emp.id) };
+}
+
+function getFacExtras(id) {
+    return JSON.parse(localStorage.getItem(`hr_fac_ex_${id}`) || '{}');
+}
+function saveFacExtras(id, data) {
+    const ex = { accountName: data.accountName || '', iban: data.iban || '' };
+    try { localStorage.setItem(`hr_fac_ex_${id}`, JSON.stringify(ex)); } catch(e) {}
+}
+function enrichFacility(f) {
+    return { ...f, ...getFacExtras(f.id) };
+}
+
+// ===== Data Loading =====
+async function loadEmployees() {
+    const data = await api.getEmployees();
+    employees = data.map(enrichEmployee);
+}
+async function loadFacilities() {
+    const data = await api.getFacilities();
+    facilities = data.map(enrichFacility);
+}
+
 // ===== File Handling =====
 const MAX_FILE_MB   = 2;
 const MAX_FILE_SIZE = MAX_FILE_MB * 1024 * 1024;
@@ -117,8 +147,7 @@ function fileItemHTML(f, showDelete) {
 function filePendingHTML(name) {
     return `<div class="file-item-pending">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-        ${name}
-    </div>`;
+        ${name}</div>`;
 }
 
 function renderEditContractFile(file) {
@@ -231,7 +260,14 @@ function navigateToEmployee(id) {
 }
 
 // ===== Dashboard =====
-function dashboard() {
+async function dashboard() {
+    try {
+        await Promise.all([loadEmployees(), loadFacilities()]);
+    } catch(e) {
+        showToast('تعذر الاتصال بالخادم', 'error');
+        return;
+    }
+
     document.getElementById('totalEmployees').textContent  = employees.length;
     document.getElementById('activeEmployees').textContent = employees.filter(e => e.status === 'نشط').length;
     document.getElementById('totalDepts').textContent      = facilities.length;
@@ -261,7 +297,16 @@ function dashboard() {
 }
 
 // ===== Employees =====
-function renderEmployees() { populateDeptFilter(); applyFilters(); }
+async function renderEmployees() {
+    try {
+        await Promise.all([loadEmployees(), loadFacilities()]);
+    } catch(e) {
+        showToast('خطأ في تحميل البيانات', 'error');
+        return;
+    }
+    populateDeptFilter();
+    applyFilters();
+}
 
 function populateDeptFilter() {
     const sel = document.getElementById('deptFilter');
@@ -309,7 +354,13 @@ function applyFilters() {
 }
 
 // ===== Facilities List =====
-function renderFacilities() {
+async function renderFacilities() {
+    try {
+        await Promise.all([loadFacilities(), loadEmployees()]);
+    } catch(e) {
+        showToast('خطأ في تحميل البيانات', 'error');
+        return;
+    }
     const tbody = document.getElementById('facilitiesTableBody');
     const empty = document.getElementById('facilitiesEmptyState');
     if (!facilities.length) { tbody.innerHTML = ''; empty.classList.remove('hidden'); return; }
@@ -343,7 +394,10 @@ function renderFacilities() {
 }
 
 // ===== Facility Detail Page =====
-function renderFacilityDetail() {
+async function renderFacilityDetail() {
+    if (!facilities.length) {
+        try { await Promise.all([loadFacilities(), loadEmployees()]); } catch(e) {}
+    }
     const f = getFacility(currentFacilityId);
     if (!f) { navigate('facilities'); return; }
 
@@ -353,7 +407,6 @@ function renderFacilityDetail() {
         ? `<span class="badge badge-blue">اساسية</span>`
         : `<span class="badge badge-purple">فرعيه</span>`;
 
-    // Breadcrumb
     const parentInfo = f.parentId
         ? `<button class="btn btn-ghost btn-sm" data-facility="${f.parentId}" style="font-size:12.5px">
                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
@@ -369,7 +422,6 @@ function renderFacilityDetail() {
         ${parentInfo}
         <span style="font-size:13px;font-weight:600;color:var(--text)">${f.name}</span>`;
 
-    // Info card
     document.getElementById('facilityInfoCard').innerHTML = `
         <div class="card" style="margin-bottom:18px">
             <div class="card-header">
@@ -419,16 +471,14 @@ function renderFacilityDetail() {
                             </a>
                         </span>
                     </div>` : ''}
-                </div><!-- /fac-info-main -->
+                </div>
                 ${facilityTreeHTML(f)}
-                </div><!-- /fac-info-with-tree -->
+                </div>
             </div>
         </div>`;
 
-    // Saudization card
     renderSaudizationCard(f);
 
-    // Sub-facilities card (only for main)
     const subEl = document.getElementById('subFacilitiesCard');
     if (f.type === 'اساسية') {
         const subs = facilities.filter(x => x.parentId === f.id);
@@ -474,7 +524,6 @@ function renderFacilityDetail() {
         subEl.innerHTML = '';
     }
 
-    // Employees card
     const facEmployees = employees.filter(e => e.facilityId === f.id);
     document.getElementById('facilityEmployeesCard').innerHTML = `
         <div class="card">
@@ -508,7 +557,10 @@ function renderFacilityDetail() {
 }
 
 // ===== Employee Detail Page =====
-function renderEmployeeDetail() {
+async function renderEmployeeDetail() {
+    if (!employees.length) {
+        try { await Promise.all([loadEmployees(), loadFacilities()]); } catch(e) {}
+    }
     const emp = employees.find(x => x.id === currentEmployeeId);
     if (!emp) { navigate('employees'); return; }
 
@@ -792,8 +844,8 @@ function inheritFromParent(parentId) {
     document.getElementById('fac-insuranceNumber').value = p.insuranceNumber || '';
     document.getElementById('fac-nationalAddress').value = p.nationalAddress || '';
     document.getElementById('fac-workLocation').value    = p.workLocation    || '';
-    document.getElementById('fac-accountName').value     = p.accountName      || '';
-    document.getElementById('fac-iban').value            = p.iban             || '';
+    document.getElementById('fac-accountName').value     = p.accountName     || '';
+    document.getElementById('fac-iban').value            = p.iban            || '';
     document.getElementById('fac-activitySearch').value  = p.economicActivity || '';
     document.getElementById('fac-activity').value        = p.economicActivity || '';
     document.getElementById('fac-isic4').value           = p.isic4            || '';
@@ -836,8 +888,8 @@ function openEditFacilityModal(id) {
     document.getElementById('fac-insuranceNumber').value       = f.insuranceNumber || '';
     document.getElementById('fac-nationalAddress').value       = f.nationalAddress || '';
     document.getElementById('fac-workLocation').value          = f.workLocation    || '';
-    document.getElementById('fac-accountName').value           = f.accountName       || '';
-    document.getElementById('fac-iban').value                  = f.iban              || '';
+    document.getElementById('fac-accountName').value           = f.accountName     || '';
+    document.getElementById('fac-iban').value                  = f.iban            || '';
     document.getElementById('fac-activitySearch').value        = f.economicActivity  || '';
     document.getElementById('fac-activity').value              = f.economicActivity  || '';
     document.getElementById('fac-isic4').value                 = f.isic4             || '';
@@ -858,45 +910,47 @@ function closeFacilityModal() {
     document.getElementById('facilityModal').classList.add('hidden');
 }
 
-function saveFacility() {
+async function saveFacility() {
     const get  = id => document.getElementById(id).value.trim();
     const name = get('fac-name');
     const type = get('fac-type');
     if (!name || !type) { showToast('يرجى إدخال اسم ونوع المنشأة', 'error'); return; }
 
-    const data = {
-        id:               currentFacilityEditId || uid(),
+    const dto = {
         name, type,
         parentId:         document.getElementById('fac-parentId').value || null,
         nationalNumber:   get('fac-nationalNumber'),
         crNumber:         get('fac-crNumber'),
-        crDate:           get('fac-crDate'),
+        crDate:           get('fac-crDate') || null,
         taxNumber:        get('fac-taxNumber'),
         insuranceNumber:  get('fac-insuranceNumber'),
         nationalAddress:  get('fac-nationalAddress'),
         workLocation:     get('fac-workLocation'),
-        accountName:      get('fac-accountName'),
-        iban:             get('fac-iban'),
         economicActivity: document.getElementById('fac-activity').value.trim(),
         isic4:            get('fac-isic4'),
-        createdAt:        currentFacilityEditId
-            ? (facilities.find(f => f.id === currentFacilityEditId)?.createdAt || new Date().toISOString())
-            : new Date().toISOString(),
     };
+    const extras = { accountName: get('fac-accountName'), iban: get('fac-iban') };
 
-    if (currentFacilityEditId) {
-        facilities[facilities.findIndex(f => f.id === currentFacilityEditId)] = data;
-        showToast('تم تعديل بيانات المنشأة بنجاح', 'success');
-    } else {
-        facilities.push(data);
-        showToast('تم إضافة المنشأة بنجاح', 'success');
+    try {
+        if (currentFacilityEditId) {
+            const updated = await api.updateFacility(currentFacilityEditId, dto);
+            saveFacExtras(currentFacilityEditId, extras);
+            const enriched = enrichFacility(updated);
+            const idx = facilities.findIndex(f => f.id === currentFacilityEditId);
+            if (idx >= 0) facilities[idx] = enriched; else facilities.push(enriched);
+            showToast('تم تعديل بيانات المنشأة بنجاح', 'success');
+        } else {
+            const created = await api.createFacility(dto);
+            saveFacExtras(created.id, extras);
+            facilities.push(enrichFacility(created));
+            showToast('تم إضافة المنشأة بنجاح', 'success');
+        }
+        closeFacilityModal();
+        const onDetail = !document.getElementById('page-facility-detail').classList.contains('hidden');
+        if (onDetail) renderFacilityDetail(); else renderFacilities();
+    } catch(e) {
+        showToast(e.message || 'خطأ في حفظ بيانات المنشأة', 'error');
     }
-
-    saveFacilities();
-    closeFacilityModal();
-
-    const onDetail = !document.getElementById('page-facility-detail').classList.contains('hidden');
-    if (onDetail) renderFacilityDetail(); else renderFacilities();
 }
 
 // ===== Reports =====
@@ -944,49 +998,71 @@ function renderAddEmployeePage() {
 
 async function submitAddEmployee() {
     const get = id => document.getElementById(id).value.trim();
-    const name=get('ae-name'), code=get('ae-code'), nationalId=get('ae-nationalId'),
-          nationality=get('ae-nationality'),
-          empType=get('ae-empType'), facilityId=get('ae-facilityId'), salary=get('ae-salary');
-    if (!name||!nationalId||!nationality||!empType||!facilityId||!salary) {
+    const name       = get('ae-name');
+    const nationalId = get('ae-nationalId');
+    const nationality = get('ae-nationality');
+    const empType    = get('ae-empType');
+    const facilityId = get('ae-facilityId');
+    const salary     = get('ae-salary');
+
+    if (!name || !nationalId || !nationality || !empType || !facilityId || !salary) {
         showToast('يرجى ملء جميع الحقول المطلوبة', 'error'); return;
     }
-    if (code && employees.find(e => e.code === code)) { showToast('الرقم التوظيفي مستخدم بالفعل', 'error'); return; }
-    employees.push({
-        id: uid(), name, code, nationalId, nationality, empType, facilityId,
-        salary: parseFloat(salary), status: document.getElementById('ae-status').value,
-        entryDate: get('ae-entryDate'), idExpiry: get('ae-idExpiry'),
-        workPermitNumber: get('ae-workPermitNumber'), workPermitExpiry: get('ae-workPermitExpiry'),
-        bank: get('ae-bank'), iban: get('ae-iban'),
-        countryCode: get('ae-countryCode'), phone: get('ae-phone'),
-        photo: await (async () => {
-            const f = document.getElementById('ae-photo').files[0];
-            if (!f) return null;
-            if (f.size > MAX_FILE_SIZE) { showToast(`حجم الصورة يتجاوز ${MAX_FILE_MB}MB`, 'error'); return undefined; }
-            return readFileAsBase64(f);
-        })(),
-        jobTitle: get('ae-jobTitle'),
-        contractStatus: document.getElementById('ae-contractStatus').value,
-        contractType:   document.getElementById('ae-contractType').value,
-        contractFile:   await (async () => {
-            const f = document.getElementById('ae-contractFile').files[0];
-            if (!f) return null;
-            if (f.size > MAX_FILE_SIZE) { showToast(`حجم الملف يتجاوز ${MAX_FILE_MB}MB`, 'error'); return undefined; }
-            return readFileAsBase64(f);
-        })(),
-        additionalDocs: await (async () => {
-            const files = Array.from(document.getElementById('ae-additionalDocs').files);
-            const big = files.find(f => f.size > MAX_FILE_SIZE);
-            if (big) { showToast(`الملف "${big.name}" يتجاوز ${MAX_FILE_MB}MB`, 'error'); return undefined; }
-            return Promise.all(files.map(readFileAsBase64));
-        })(),
-        createdAt: new Date().toISOString(),
-    });
-    // abort if file size error (undefined signals error)
-    const last = employees[employees.length - 1];
-    if (last.photo === undefined || last.contractFile === undefined || last.additionalDocs === undefined) { employees.pop(); return; }
-    try { save(); } catch(e) { employees.pop(); showToast('مساحة التخزين ممتلئة، قلّل حجم الملفات', 'error'); return; }
-    showToast('تم إضافة الموظف بنجاح', 'success');
-    navigate('employees');
+
+    // Handle files
+    let photo = null;
+    const photoFile = document.getElementById('ae-photo').files[0];
+    if (photoFile) {
+        if (photoFile.size > MAX_FILE_SIZE) { showToast(`حجم الصورة يتجاوز ${MAX_FILE_MB}MB`, 'error'); return; }
+        photo = await readFileAsBase64(photoFile);
+    }
+    let contractFile = null;
+    const cf = document.getElementById('ae-contractFile').files[0];
+    if (cf) {
+        if (cf.size > MAX_FILE_SIZE) { showToast(`حجم الملف يتجاوز ${MAX_FILE_MB}MB`, 'error'); return; }
+        contractFile = await readFileAsBase64(cf);
+    }
+    const docFiles = Array.from(document.getElementById('ae-additionalDocs').files);
+    const bigDoc = docFiles.find(f => f.size > MAX_FILE_SIZE);
+    if (bigDoc) { showToast(`الملف "${bigDoc.name}" يتجاوز ${MAX_FILE_MB}MB`, 'error'); return; }
+    const additionalDocs = await Promise.all(docFiles.map(readFileAsBase64));
+
+    const dto = {
+        name,
+        code:        get('ae-code'),
+        nationalId,
+        idNumber:    nationalId, // no separate idNumber field in UI
+        nationality,
+        empType,
+        facilityId,
+        salary:      parseFloat(salary),
+        status:      document.getElementById('ae-status').value,
+        entryDate:   get('ae-entryDate') || null,
+        idExpiry:    get('ae-idExpiry')  || null,
+        bank:        get('ae-bank'),
+        iban:        get('ae-iban'),
+        countryCode: get('ae-countryCode'),
+        phone:       get('ae-phone'),
+        jobTitle:    get('ae-jobTitle'),
+        department:  get('ae-department') || '',
+    };
+
+    try {
+        const created = await api.createEmployee(dto);
+        saveEmpExtras(created.id, {
+            photo, contractFile, additionalDocs,
+            workPermitNumber: get('ae-workPermitNumber'),
+            workPermitExpiry: get('ae-workPermitExpiry'),
+            contractStatus:   document.getElementById('ae-contractStatus').value,
+            contractType:     document.getElementById('ae-contractType').value,
+        });
+        employees.push(enrichEmployee(created));
+        showToast('تم إضافة الموظف بنجاح', 'success');
+        navigate('employees');
+    } catch(e) {
+        if (e.message?.includes('already exists')) showToast('الرقم التوظيفي مستخدم بالفعل', 'error');
+        else showToast(e.message || 'خطأ في حفظ بيانات الموظف', 'error');
+    }
 }
 
 // ===== Edit Employee Modal =====
@@ -1014,7 +1090,6 @@ function openEditModal(id) {
     document.getElementById('empIban').value             = e.iban         || '';
     document.getElementById('empCountryCode').value      = e.countryCode  || '';
     document.getElementById('empPhone').value            = e.phone        || '';
-    // Photo preview
     const prevEl = document.getElementById('empPhotoPreview');
     if (e.photo?.data) {
         prevEl.innerHTML = `<img src="${e.photo.data}" alt="${e.name}">`;
@@ -1038,65 +1113,75 @@ function closeModal() { document.getElementById('employeeModal').classList.add('
 
 async function saveEmployee() {
     const get = id => document.getElementById(id).value.trim();
-    const name=get('empName'), code=get('empCode'), nationalId=get('empNationalId'),
-          nationality=get('empNationality'),
-          empType=get('empType'), facilityId=get('empFacilityId'), salary=get('empSalary');
-    if (!name||!nationalId||!nationality||!empType||!facilityId||!salary) {
+    const name       = get('empName');
+    const nationalId = get('empNationalId');
+    const nationality = get('empNationality');
+    const empType    = get('empType');
+    const facilityId = get('empFacilityId');
+    const salary     = get('empSalary');
+
+    if (!name || !nationalId || !nationality || !empType || !facilityId || !salary) {
         showToast('يرجى ملء جميع الحقول المطلوبة', 'error'); return;
     }
-    if (code && employees.find(e => e.code === code && e.id !== currentEditId)) {
-        showToast('الرقم التوظيفي مستخدم بالفعل', 'error'); return;
+
+    // Handle files (preserve existing if no new file selected)
+    const existing = employees.find(e => e.id === currentEditId);
+
+    let photo = existing?.photo || null;
+    const photoFile = document.getElementById('empPhoto').files[0];
+    if (photoFile) {
+        if (photoFile.size > MAX_FILE_SIZE) { showToast(`حجم الصورة يتجاوز ${MAX_FILE_MB}MB`, 'error'); return; }
+        photo = await readFileAsBase64(photoFile);
     }
-    const data = {
-        id: currentEditId || uid(), name, code, nationalId, nationality, empType, facilityId,
-        salary: parseFloat(salary), status: document.getElementById('empStatus').value,
-        entryDate: get('empEntryDate'), idExpiry: get('empIdExpiry'),
-        workPermitNumber: get('empWorkPermitNumber'), workPermitExpiry: get('empWorkPermitExpiry'),
-        bank: get('empBank'), iban: get('empIban'), countryCode: get('empCountryCode'), phone: get('empPhone'),
-        photo: await (async () => {
-            const existing = employees.find(e => e.id === currentEditId);
-            const f = document.getElementById('empPhoto').files[0];
-            if (f) {
-                if (f.size > MAX_FILE_SIZE) { showToast(`حجم الصورة يتجاوز ${MAX_FILE_MB}MB`, 'error'); return undefined; }
-                return readFileAsBase64(f);
-            }
-            return existing?.photo || null;
-        })(),
-        jobTitle:        get('empJobTitle'),
-        contractStatus:  document.getElementById('empContractStatus').value,
-        contractType:    document.getElementById('empContractType').value,
-        contractFile:    await (async () => {
-            const existing = employees.find(e => e.id === currentEditId);
-            const f = document.getElementById('empContractFile').files[0];
-            if (f) {
-                if (f.size > MAX_FILE_SIZE) { showToast(`حجم الملف يتجاوز ${MAX_FILE_MB}MB`, 'error'); return undefined; }
-                return readFileAsBase64(f);
-            }
-            return existing?.contractFile || null;
-        })(),
-        additionalDocs:  await (async () => {
-            const existing = employees.find(e => e.id === currentEditId);
-            const kept = (existing?.additionalDocs || []).filter(d => !_editRemovedDocs.has(d.name));
-            const newFiles = Array.from(document.getElementById('empAdditionalDocs').files);
-            const big = newFiles.find(f => f.size > MAX_FILE_SIZE);
-            if (big) { showToast(`الملف "${big.name}" يتجاوز ${MAX_FILE_MB}MB`, 'error'); return undefined; }
-            const added = await Promise.all(newFiles.map(readFileAsBase64));
-            return [...kept, ...added];
-        })(),
-        createdAt: currentEditId ? (employees.find(e => e.id === currentEditId)?.createdAt || new Date().toISOString()) : new Date().toISOString(),
+
+    let contractFile = existing?.contractFile || null;
+    const cf = document.getElementById('empContractFile').files[0];
+    if (cf) {
+        if (cf.size > MAX_FILE_SIZE) { showToast(`حجم الملف يتجاوز ${MAX_FILE_MB}MB`, 'error'); return; }
+        contractFile = await readFileAsBase64(cf);
+    }
+
+    const kept = (existing?.additionalDocs || []).filter(d => !_editRemovedDocs.has(d.name));
+    const newFiles = Array.from(document.getElementById('empAdditionalDocs').files);
+    const bigDoc = newFiles.find(f => f.size > MAX_FILE_SIZE);
+    if (bigDoc) { showToast(`الملف "${bigDoc.name}" يتجاوز ${MAX_FILE_MB}MB`, 'error'); return; }
+    const additionalDocs = [...kept, ...await Promise.all(newFiles.map(readFileAsBase64))];
+
+    const dto = {
+        name,
+        nationality,
+        empType,
+        facilityId:  facilityId || null,
+        salary:      parseFloat(salary),
+        status:      document.getElementById('empStatus').value,
+        entryDate:   get('empEntryDate')    || null,
+        idExpiry:    get('empIdExpiry')     || null,
+        bank:        get('empBank'),
+        iban:        get('empIban'),
+        countryCode: get('empCountryCode'),
+        phone:       get('empPhone'),
+        jobTitle:    get('empJobTitle'),
     };
-    if (data.photo === undefined || data.contractFile === undefined || data.additionalDocs === undefined) return;
-    if (currentEditId) {
-        employees[employees.findIndex(e => e.id === currentEditId)] = data;
+
+    try {
+        const updated = await api.updateEmployee(currentEditId, dto);
+        saveEmpExtras(currentEditId, {
+            photo, contractFile, additionalDocs,
+            workPermitNumber: get('empWorkPermitNumber'),
+            workPermitExpiry: get('empWorkPermitExpiry'),
+            contractStatus:   document.getElementById('empContractStatus').value,
+            contractType:     document.getElementById('empContractType').value,
+        });
+        const enriched = enrichEmployee(updated);
+        const idx = employees.findIndex(e => e.id === currentEditId);
+        if (idx >= 0) employees[idx] = enriched;
         showToast('تم تعديل بيانات الموظف بنجاح', 'success');
-    } else {
-        employees.push(data);
-        showToast('تم إضافة الموظف بنجاح', 'success');
+        closeModal();
+        const onEmpDetailPage = !document.getElementById('page-employee-detail').classList.contains('hidden');
+        if (onEmpDetailPage) renderEmployeeDetail(); else renderEmployees();
+    } catch(e) {
+        showToast(e.message || 'خطأ في حفظ بيانات الموظف', 'error');
     }
-    try { save(); } catch(e) { showToast('مساحة التخزين ممتلئة، قلّل حجم الملفات', 'error'); return; }
-    const onEmpDetailPage = !document.getElementById('page-employee-detail').classList.contains('hidden');
-    closeModal();
-    if (onEmpDetailPage) renderEmployeeDetail(); else renderEmployees();
 }
 
 // ===== Delete =====
@@ -1108,50 +1193,61 @@ function closeConfirmModal() {
     deleteTargetId = null; deleteFacilityTargetId = null; deleteMode = null;
 }
 
-function confirmDeleteAction() {
+async function confirmDeleteAction() {
     if (deleteMode === 'employee' && deleteTargetId) {
         const wasCurrentEmployee = currentEmployeeId === deleteTargetId;
-        employees = employees.filter(e => e.id !== deleteTargetId);
-        save();
-        showToast('تم حذف الموظف بنجاح', 'success');
-        const onEmpDetail = !document.getElementById('page-employee-detail').classList.contains('hidden');
-        if (wasCurrentEmployee || onEmpDetail) navigate('employees');
-        else renderEmployees();
+        try {
+            await api.deleteEmployee(deleteTargetId);
+            localStorage.removeItem(`hr_emp_ex_${deleteTargetId}`);
+            employees = employees.filter(e => e.id !== deleteTargetId);
+            showToast('تم حذف الموظف بنجاح', 'success');
+            const onEmpDetail = !document.getElementById('page-employee-detail').classList.contains('hidden');
+            if (wasCurrentEmployee || onEmpDetail) navigate('employees');
+            else renderEmployees();
+        } catch(e) {
+            showToast(e.message || 'خطأ في حذف الموظف', 'error');
+        }
     } else if (deleteMode === 'facility' && deleteFacilityTargetId) {
         const wasCurrentFacility = currentFacilityId === deleteFacilityTargetId;
-        facilities = facilities.filter(f => f.id !== deleteFacilityTargetId);
-        saveFacilities();
-        showToast('تم حذف المنشأة بنجاح', 'success');
-        const onDetail = !document.getElementById('page-facility-detail').classList.contains('hidden');
-        if (wasCurrentFacility) navigate('facilities');
-        else if (onDetail) renderFacilityDetail();
-        else renderFacilities();
+        try {
+            await api.deleteFacility(deleteFacilityTargetId);
+            localStorage.removeItem(`hr_fac_ex_${deleteFacilityTargetId}`);
+            facilities = facilities.filter(f => f.id !== deleteFacilityTargetId);
+            showToast('تم حذف المنشأة بنجاح', 'success');
+            const onDetail = !document.getElementById('page-facility-detail').classList.contains('hidden');
+            if (wasCurrentFacility) navigate('facilities');
+            else if (onDetail) renderFacilityDetail();
+            else renderFacilities();
+        } catch(e) {
+            showToast(e.message || 'خطأ في حذف المنشأة', 'error');
+        }
     }
     closeConfirmModal();
 }
 
 // ===== Sample Data =====
-function loadSampleData() {
-    const f1 = { id: uid(), type: 'اساسية', parentId: null, name: 'شركة التقنية المتقدمة',    nationalNumber: '7001234567', crNumber: '1010123456', crDate: '2018-03-01', taxNumber: '300012345600003', insuranceNumber: '2000123456', nationalAddress: '', workLocation: 'الرياض - حي العليا',  createdAt: new Date().toISOString() };
-    const f2 = { id: uid(), type: 'اساسية', parentId: null, name: 'مجموعة المالية والاستثمار', nationalNumber: '7002345678', crNumber: '1010234567', crDate: '2015-01-10', taxNumber: '300023456700003', insuranceNumber: '2000234567', nationalAddress: '', workLocation: 'الدمام - حي الشاطئ', createdAt: new Date().toISOString() };
-    const f3 = { id: uid(), type: 'فرعيه',  parentId: f1.id, name: 'فرع الرياض - التقنية',    nationalNumber: '7001234567', crNumber: '1010123456', crDate: '2018-03-01', taxNumber: '300012345600003', insuranceNumber: '2000123456', nationalAddress: '', workLocation: 'الرياض - حي النزهة', createdAt: new Date().toISOString() };
-    const f4 = { id: uid(), type: 'فرعيه',  parentId: f1.id, name: 'فرع جدة - التقنية',       nationalNumber: '7001234567', crNumber: '1010123456', crDate: '2018-03-01', taxNumber: '300012345600003', insuranceNumber: '2000123456', nationalAddress: '', workLocation: 'جدة - حي الحمراء',  createdAt: new Date().toISOString() };
-    facilities.push(f1, f2, f3, f4);
-    saveFacilities();
+async function loadSampleData() {
+    try {
+        const f1 = await api.createFacility({ name: 'شركة التقنية المتقدمة',    type: 'اساسية', nationalNumber: '7001234567', crNumber: '1010123456', crDate: '2018-03-01', taxNumber: '300012345600003', insuranceNumber: '2000123456', workLocation: 'الرياض - حي العليا' });
+        const f2 = await api.createFacility({ name: 'مجموعة المالية والاستثمار', type: 'اساسية', nationalNumber: '7002345678', crNumber: '1010234567', crDate: '2015-01-10', taxNumber: '300023456700003', insuranceNumber: '2000234567', workLocation: 'الدمام - حي الشاطئ' });
+        const f3 = await api.createFacility({ name: 'فرع الرياض - التقنية',    type: 'فرعيه', parentId: f1.id, nationalNumber: '7001234567', crNumber: '1010123456', workLocation: 'الرياض - حي النزهة' });
+        const f4 = await api.createFacility({ name: 'فرع جدة - التقنية',       type: 'فرعيه', parentId: f1.id, nationalNumber: '7001234567', crNumber: '1010123456', workLocation: 'جدة - حي الحمراء' });
 
-    const samples = [
-        { name: 'أحمد محمد العلي',      code: 'EMP-001', nationalId: '1234567890', nationality: 'سعودي',  empType: 'سعودي', facilityId: f1.id, salary: 14000, status: 'نشط',        idExpiry: '2026-05-01', entryDate: '2021-03-15', bank: 'بنك الراجحي',  iban: 'SA0380000000608010167519', countryCode: '+966', phone: '501234567' },
-        { name: 'فاطمة عبدالله السعيد', code: 'EMP-002', nationalId: '2345678901', nationality: 'سعودية', empType: 'سعودي', facilityId: f3.id, salary: 10000, status: 'نشط',        idExpiry: '2027-08-15', entryDate: '2020-07-01', bank: 'البنك الأهلي', iban: 'SA4420000001234567891234', countryCode: '+966', phone: '557654321' },
-        { name: 'خالد إبراهيم المنصور', code: 'EMP-003', nationalId: '3456789012', nationality: 'أردني',  empType: 'اجنبي', facilityId: f2.id, salary: 12000, status: 'نشط',        idExpiry: '2025-12-31', entryDate: '2019-01-10', bank: 'بنك الإنماء',  iban: 'SA2980000247636520123456', countryCode: '+966', phone: '509876543' },
-        { name: 'نورة سعد الشمري',      code: 'EMP-004', nationalId: '4567890123', nationality: 'سعودية', empType: 'سعودي', facilityId: f4.id, salary:  9500, status: 'اجازة',      idExpiry: '2028-03-20', entryDate: '2022-09-20', bank: 'بنك الراجحي',  iban: 'SA0380000000608010167520', countryCode: '+966', phone: '541234567' },
-        { name: 'محمد علي الزهراني',    code: 'EMP-005', nationalId: '5678901234', nationality: 'مصري',   empType: 'اجنبي', facilityId: f1.id, salary: 13500, status: 'خروج مؤقت', idExpiry: '2026-11-30', entryDate: '2020-05-05', bank: 'مصرف الراجحي', iban: 'SA0380000000608010167521', countryCode: '+966', phone: '562345678' },
-    ];
-    samples.forEach(s => employees.push({ ...s, id: uid(), createdAt: new Date().toISOString() }));
-    save();
+        await Promise.all([
+            api.createEmployee({ name: 'أحمد محمد العلي',      code: 'EMP-001', nationalId: '1234567890', idNumber: '1234567890', nationality: 'سعودي',  empType: 'سعودي', facilityId: f1.id, salary: 14000, status: 'نشط',        idExpiry: '2026-05-01', entryDate: '2021-03-15', bank: 'بنك الراجحي',  iban: 'SA0380000000608010167519', countryCode: '+966', phone: '501234567' }),
+            api.createEmployee({ name: 'فاطمة عبدالله السعيد', code: 'EMP-002', nationalId: '2345678901', idNumber: '2345678901', nationality: 'سعودية', empType: 'سعودي', facilityId: f3.id, salary: 10000, status: 'نشط',        idExpiry: '2027-08-15', entryDate: '2020-07-01', bank: 'البنك الأهلي', iban: 'SA4420000001234567891234', countryCode: '+966', phone: '557654321' }),
+            api.createEmployee({ name: 'خالد إبراهيم المنصور', code: 'EMP-003', nationalId: '3456789012', idNumber: '3456789012', nationality: 'أردني',  empType: 'اجنبي', facilityId: f2.id, salary: 12000, status: 'نشط',        idExpiry: '2025-12-31', entryDate: '2019-01-10', bank: 'بنك الإنماء',  iban: 'SA2980000247636520123456', countryCode: '+966', phone: '509876543' }),
+            api.createEmployee({ name: 'نورة سعد الشمري',      code: 'EMP-004', nationalId: '4567890123', idNumber: '4567890123', nationality: 'سعودية', empType: 'سعودي', facilityId: f4.id, salary:  9500, status: 'اجازة',      idExpiry: '2028-03-20', entryDate: '2022-09-20', bank: 'بنك الراجحي',  iban: 'SA0380000000608010167520', countryCode: '+966', phone: '541234567' }),
+            api.createEmployee({ name: 'محمد علي الزهراني',    code: 'EMP-005', nationalId: '5678901234', idNumber: '5678901234', nationality: 'مصري',   empType: 'اجنبي', facilityId: f1.id, salary: 13500, status: 'خروج مؤقت', idExpiry: '2026-11-30', entryDate: '2020-05-05', bank: 'مصرف الراجحي', iban: 'SA0380000000608010167521', countryCode: '+966', phone: '562345678' }),
+        ]);
+        await Promise.all([loadFacilities(), loadEmployees()]);
+    } catch(e) {
+        console.error('Failed to load sample data:', e);
+    }
 }
 
 // ===== Event Binding =====
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     document.querySelectorAll('.nav-link').forEach(link => {
         link.addEventListener('click', e => { e.preventDefault(); navigate(link.dataset.page); });
     });
@@ -1291,9 +1387,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initSearchableSelect('fac-activitySearch', 'fac-activityDropdown', 'fac-activity', ECONOMIC_ACTIVITIES);
 
-    if (employees.length === 0 && facilities.length === 0) loadSampleData();
-    dashboard();
-
     // Transfers module events (defined in transfers.js)
     if (typeof initTransferEvents === 'function') initTransferEvents();
+
+    // Load initial data from API
+    try {
+        await Promise.all([loadFacilities(), loadEmployees()]);
+        if (employees.length === 0 && facilities.length === 0) {
+            await loadSampleData();
+        }
+    } catch(e) {
+        showToast('تعذر الاتصال بالخادم. تأكد من تشغيل واجهة برمجة التطبيقات (API) على المنفذ 5140.', 'error');
+    }
+
+    dashboard();
 });

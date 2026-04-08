@@ -159,3 +159,5 @@ D:\HR-SAR\HR-SAR\APIs\HR-SAR\obj\Debug\net10.0\refint\HR-SAR.dll
 D:\HR-SAR\HR-SAR\APIs\HR-SAR\obj\Debug\net10.0\HR-SAR.pdb
 D:\HR-SAR\HR-SAR\APIs\HR-SAR\obj\Debug\net10.0\HR-SAR.genruntimeconfig.cache
 D:\HR-SAR\HR-SAR\APIs\HR-SAR\obj\Debug\net10.0\ref\HR-SAR.dll
+D:\HR-SAR\HR-SAR\APIs\HR-SAR\bin\Debug\net10.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
+D:\HR-SAR\HR-SAR\APIs\HR-SAR\bin\Debug\net10.0\Microsoft.AspNetCore.Identity.EntityFrameworkCore.dll

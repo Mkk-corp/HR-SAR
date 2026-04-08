@@ -8,10 +8,12 @@ public record ProfileDto(
     string FullName,
     string? JobTitle,
     string[] Roles,
-    string[] Permissions
+    string[] Permissions,
+    string? PhotoUrl = null
 );
 
 public record UpdateProfileDto(
     [Required, MaxLength(200)] string FullName,
-    [MaxLength(100)] string? JobTitle
+    [MaxLength(100)] string? JobTitle,
+    string? PhotoUrl = null
 );

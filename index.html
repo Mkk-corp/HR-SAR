@@ -20,12 +20,12 @@
         </div>
         <form id="loginForm" onsubmit="handleLogin(event)">
             <div class="form-group">
-                <label class="form-label">البريد الإلكتروني</label>
-                <input type="email" id="loginEmail" class="form-control" placeholder="admin@hr-sar.com" required>
+                <label>البريد الإلكتروني</label>
+                <input type="email" id="loginEmail" placeholder="admin@hr-sar.com" required>
             </div>
             <div class="form-group">
-                <label class="form-label">كلمة المرور</label>
-                <input type="password" id="loginPassword" class="form-control" placeholder="••••••••" required>
+                <label>كلمة المرور</label>
+                <input type="password" id="loginPassword" placeholder="••••••••" required>
             </div>
             <p id="loginError" style="color:var(--danger);font-size:13px;min-height:18px"></p>
             <button type="submit" id="loginBtn" class="btn btn-primary" style="width:100%">تسجيل الدخول</button>
@@ -1105,17 +1105,20 @@
 </div>
 
 <!-- ===== Users Page ===== -->
+<!-- ===== Users Page ===== -->
 <div class="page hidden" id="page-users">
-    <div class="page-header">
-        <h1 class="page-title-main">المستخدمون والحسابات</h1>
-        <button class="btn btn-primary" onclick="openCreateUserModal()" data-permission="users.create">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            إضافة مستخدم
-        </button>
-    </div>
     <div class="card">
-        <div class="table-container">
-            <table class="data-table">
+        <div class="card-header">
+            <h3>المستخدمون والحسابات</h3>
+            <div class="card-actions">
+                <button class="btn btn-primary" onclick="openCreateUserModal()" data-permission="users.create">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    إضافة مستخدم
+                </button>
+            </div>
+        </div>
+        <div class="card-body p0">
+            <table class="table" id="usersTable">
                 <thead>
                     <tr>
                         <th>المستخدم</th>
@@ -1123,49 +1126,65 @@
                         <th>الدور</th>
                         <th>الحالة</th>
                         <th>تاريخ الإنشاء</th>
-                        <th></th>
+                        <th>الإجراءات</th>
                     </tr>
                 </thead>
                 <tbody id="usersTableBody">
-                    <tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-3)">جاري التحميل...</td></tr>
+                    <tr><td colspan="6" style="text-align:center;padding:2.5rem;color:var(--text-3)">جاري التحميل...</td></tr>
                 </tbody>
             </table>
+            <div class="empty-state hidden" id="usersEmptyState">
+                <div class="empty-icon">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>
+                </div>
+                <p>لا يوجد مستخدمون</p>
+                <button class="btn btn-primary" onclick="openCreateUserModal()" data-permission="users.create">إضافة مستخدم</button>
+            </div>
         </div>
     </div>
 </div>
 
 <!-- ===== Roles Page ===== -->
 <div class="page hidden" id="page-roles">
-    <div class="page-header">
-        <h1 class="page-title-main">الأدوار والصلاحيات</h1>
-        <button class="btn btn-primary" onclick="openCreateRoleModal()" data-permission="roles.create">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            إنشاء دور
-        </button>
-    </div>
     <div class="card">
-        <div class="table-container">
-            <table class="data-table">
+        <div class="card-header">
+            <h3>الأدوار والصلاحيات</h3>
+            <div class="card-actions">
+                <button class="btn btn-primary" onclick="openCreateRoleModal()" data-permission="roles.create">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    إنشاء دور
+                </button>
+            </div>
+        </div>
+        <div class="card-body p0">
+            <table class="table" id="rolesTable">
                 <thead>
                     <tr>
                         <th>الدور</th>
                         <th>الوصف</th>
                         <th>الصلاحيات</th>
                         <th>المستخدمون</th>
-                        <th></th>
+                        <th>الإجراءات</th>
                     </tr>
                 </thead>
                 <tbody id="rolesTableBody">
-                    <tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-3)">جاري التحميل...</td></tr>
+                    <tr><td colspan="5" style="text-align:center;padding:2.5rem;color:var(--text-3)">جاري التحميل...</td></tr>
                 </tbody>
             </table>
+            <div class="empty-state hidden" id="rolesEmptyState">
+                <div class="empty-icon">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                </div>
+                <p>لا توجد أدوار</p>
+                <button class="btn btn-primary" onclick="openCreateRoleModal()" data-permission="roles.create">إنشاء دور</button>
+            </div>
         </div>
     </div>
 </div>
 
 <!-- ===== User Modal ===== -->
 <div class="modal-overlay hidden" id="userModal">
-    <div class="modal" style="max-width:500px">
+    <div class="modal modal-sm">
         <div class="modal-header">
             <h2 id="userModalTitle">إضافة مستخدم</h2>
             <button class="modal-close" onclick="closeUserModal()">
@@ -1174,40 +1193,43 @@
         </div>
         <form id="userForm" onsubmit="saveUser(event)">
             <div class="modal-body">
-                <div class="form-row">
+                <div class="form-grid">
                     <div class="form-group">
-                        <label class="form-label">الاسم الكامل <span class="required">*</span></label>
-                        <input type="text" id="userFullName" class="form-control" required>
+                        <label>الاسم الكامل <span class="required">*</span></label>
+                        <input type="text" id="userFullName" required>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">المسمى الوظيفي</label>
-                        <input type="text" id="userJobTitle" class="form-control">
+                        <label>المسمى الوظيفي</label>
+                        <input type="text" id="userJobTitle">
+                    </div>
+                    <div class="form-group form-span-2">
+                        <label>البريد الإلكتروني <span class="required">*</span></label>
+                        <input type="email" id="userEmail" required>
+                    </div>
+                    <div class="form-group form-span-2" id="userPasswordGroup">
+                        <label>كلمة المرور <span class="required">*</span></label>
+                        <input type="password" id="userPassword" minlength="8">
+                    </div>
+                    <div class="form-group form-span-2">
+                        <label>الدور <span class="required">*</span></label>
+                        <select id="userRoleId" required>
+                            <option value="">— اختر دوراً —</option>
+                        </select>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">البريد الإلكتروني <span class="required">*</span></label>
-                    <input type="email" id="userEmail" class="form-control" required>
-                </div>
-                <div class="form-group" id="userPasswordGroup">
-                    <label class="form-label">كلمة المرور <span class="required">*</span></label>
-                    <input type="password" id="userPassword" class="form-control" minlength="8">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">الدور <span class="required">*</span></label>
-                    <select id="userRoleId" class="form-control" required>
-                        <option value="">— اختر دوراً —</option>
-                    </select>
-                </div>
-                <div class="form-group" id="userActiveGroup">
-                    <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer">
-                        <input type="checkbox" id="userIsActive" checked>
+                <div class="form-group" id="userActiveGroup" style="margin-top:4px">
+                    <label style="display:flex;align-items:center;gap:.6rem;cursor:pointer;font-size:13.5px">
+                        <input type="checkbox" id="userIsActive" checked style="width:15px;height:15px">
                         مستخدم نشط
                     </label>
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" onclick="closeUserModal()">إلغاء</button>
-                <button type="submit" class="btn btn-primary">حفظ</button>
+                <button type="submit" class="btn btn-primary">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    حفظ
+                </button>
             </div>
         </form>
     </div>
@@ -1215,7 +1237,7 @@
 
 <!-- ===== Reset Password Modal ===== -->
 <div class="modal-overlay hidden" id="resetPwModal">
-    <div class="modal" style="max-width:420px">
+    <div class="modal modal-sm">
         <div class="modal-header">
             <h2>إعادة تعيين كلمة المرور</h2>
             <button class="modal-close" onclick="closeResetPasswordModal()">
@@ -1224,14 +1246,16 @@
         </div>
         <form onsubmit="confirmResetPassword(event)">
             <div class="modal-body">
-                <p style="margin-bottom:1rem">إعادة تعيين كلمة مرور: <strong id="resetPwUserName"></strong></p>
-                <div class="form-group">
-                    <label class="form-label">كلمة المرور الجديدة</label>
-                    <input type="password" id="resetNewPassword" class="form-control" minlength="8" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">تأكيد كلمة المرور</label>
-                    <input type="password" id="resetConfirmPassword" class="form-control" minlength="8" required>
+                <p style="font-size:13.5px;color:var(--text-2);margin-bottom:18px">تعيين كلمة مرور جديدة للمستخدم: <strong style="color:var(--text)" id="resetPwUserName"></strong></p>
+                <div class="form-grid" style="grid-template-columns:1fr">
+                    <div class="form-group">
+                        <label>كلمة المرور الجديدة <span class="required">*</span></label>
+                        <input type="password" id="resetNewPassword" minlength="8" required>
+                    </div>
+                    <div class="form-group">
+                        <label>تأكيد كلمة المرور <span class="required">*</span></label>
+                        <input type="password" id="resetConfirmPassword" minlength="8" required>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -1244,7 +1268,7 @@
 
 <!-- ===== Delete User Modal ===== -->
 <div class="modal-overlay hidden" id="deleteUserModal">
-    <div class="modal" style="max-width:400px">
+    <div class="modal modal-sm">
         <div class="modal-header">
             <h2>حذف المستخدم</h2>
             <button class="modal-close" onclick="closeDeleteUserModal()">
@@ -1252,18 +1276,25 @@
             </button>
         </div>
         <div class="modal-body">
-            <p>هل تريد حذف المستخدم <strong id="deleteUserName"></strong>؟ لا يمكن التراجع عن هذه العملية.</p>
+            <div class="confirm-icon">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="1.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </div>
+            <p class="confirm-title">هل أنت متأكد من الحذف؟</p>
+            <p class="confirm-sub">سيتم حذف المستخدم <strong id="deleteUserName"></strong> نهائياً ولا يمكن التراجع.</p>
         </div>
         <div class="modal-footer">
             <button class="btn btn-secondary" onclick="closeDeleteUserModal()">إلغاء</button>
-            <button class="btn btn-danger" onclick="executeDeleteUser()">حذف</button>
+            <button class="btn btn-danger" onclick="executeDeleteUser()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+                حذف
+            </button>
         </div>
     </div>
 </div>
 
 <!-- ===== Role Modal ===== -->
 <div class="modal-overlay hidden" id="roleModal">
-    <div class="modal" style="max-width:640px">
+    <div class="modal modal-lg">
         <div class="modal-header">
             <h2 id="roleModalTitle">إنشاء دور</h2>
             <button class="modal-close" onclick="closeRoleModal()">
@@ -1272,24 +1303,25 @@
         </div>
         <form id="roleForm" onsubmit="saveRole(event)">
             <div class="modal-body">
-                <div class="form-row">
+                <div class="form-grid">
                     <div class="form-group">
-                        <label class="form-label">اسم الدور <span class="required">*</span></label>
-                        <input type="text" id="roleName" class="form-control" required>
+                        <label>اسم الدور <span class="required">*</span></label>
+                        <input type="text" id="roleName" required>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">الوصف</label>
-                        <input type="text" id="roleDescription" class="form-control">
+                        <label>الوصف</label>
+                        <input type="text" id="roleDescription">
                     </div>
                 </div>
-                <div class="form-group">
-                    <label class="form-label" style="margin-bottom:.75rem">الصلاحيات</label>
-                    <div id="permissionsGrid" class="permissions-grid"></div>
-                </div>
+                <div class="form-section-label">الصلاحيات</div>
+                <div id="permissionsGrid" class="permissions-grid"></div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" onclick="closeRoleModal()">إلغاء</button>
-                <button type="submit" class="btn btn-primary">حفظ</button>
+                <button type="submit" class="btn btn-primary">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    حفظ
+                </button>
             </div>
         </form>
     </div>
@@ -1297,7 +1329,7 @@
 
 <!-- ===== Delete Role Modal ===== -->
 <div class="modal-overlay hidden" id="deleteRoleModal">
-    <div class="modal" style="max-width:400px">
+    <div class="modal modal-sm">
         <div class="modal-header">
             <h2>حذف الدور</h2>
             <button class="modal-close" onclick="closeDeleteRoleModal()">
@@ -1305,18 +1337,25 @@
             </button>
         </div>
         <div class="modal-body">
-            <p>هل تريد حذف الدور <strong id="deleteRoleName"></strong>؟</p>
+            <div class="confirm-icon">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="1.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </div>
+            <p class="confirm-title">هل أنت متأكد من الحذف؟</p>
+            <p class="confirm-sub">سيتم حذف دور <strong id="deleteRoleName"></strong> نهائياً.</p>
         </div>
         <div class="modal-footer">
             <button class="btn btn-secondary" onclick="closeDeleteRoleModal()">إلغاء</button>
-            <button class="btn btn-danger" onclick="executeDeleteRole()">حذف</button>
+            <button class="btn btn-danger" onclick="executeDeleteRole()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+                حذف
+            </button>
         </div>
     </div>
 </div>
 
 <!-- ===== Profile Modal ===== -->
 <div class="modal-overlay hidden" id="profileModal">
-    <div class="modal" style="max-width:480px">
+    <div class="modal modal-sm">
         <div class="modal-header">
             <h2>الملف الشخصي</h2>
             <button class="modal-close" onclick="closeProfileModal()">
@@ -1325,43 +1364,60 @@
         </div>
         <form onsubmit="saveProfile(event)">
             <div class="modal-body">
-                <div class="form-group">
-                    <label class="form-label">البريد الإلكتروني</label>
-                    <div id="profileEmail" style="padding:.5rem;color:var(--text-2)"></div>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">الدور</label>
-                    <div id="profileRoles" style="padding:.5rem;color:var(--text-2)"></div>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">الاسم الكامل</label>
-                    <input type="text" id="profileFullName" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">المسمى الوظيفي</label>
-                    <input type="text" id="profileJobTitle" class="form-control">
-                </div>
-                <div id="profileChangePwSection" class="hidden" style="border-top:1px solid var(--border);padding-top:1rem;margin-top:.5rem">
-                    <p style="font-weight:600;margin-bottom:.75rem">تغيير كلمة المرور</p>
+                <div class="form-section-label">معلومات الحساب</div>
+                <div class="form-grid" style="grid-template-columns:1fr;gap:10px;margin-bottom:0">
                     <div class="form-group">
-                        <label class="form-label">كلمة المرور الحالية</label>
-                        <input type="password" id="currentPassword" class="form-control">
+                        <label>البريد الإلكتروني</label>
+                        <div id="profileEmail" style="padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13.5px;color:var(--text-3);background:var(--bg)"></div>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">كلمة المرور الجديدة</label>
-                        <input type="password" id="newPassword" class="form-control" minlength="8">
+                        <label>الدور</label>
+                        <div id="profileRoles" style="padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13.5px;color:var(--text-3);background:var(--bg)"></div>
+                    </div>
+                </div>
+                <div class="form-section-label">البيانات الشخصية</div>
+                <div class="form-grid" style="grid-template-columns:1fr">
+                    <div class="form-group">
+                        <label>الاسم الكامل <span class="required">*</span></label>
+                        <input type="text" id="profileFullName" required>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">تأكيد كلمة المرور</label>
-                        <input type="password" id="confirmPassword" class="form-control">
+                        <label>المسمى الوظيفي</label>
+                        <input type="text" id="profileJobTitle">
                     </div>
-                    <button type="button" class="btn btn-outline" onclick="changePassword(event)">تغيير كلمة المرور</button>
+                </div>
+                <div id="profileChangePwSection" class="hidden">
+                    <div class="form-section-label">تغيير كلمة المرور</div>
+                    <div class="form-grid" style="grid-template-columns:1fr">
+                        <div class="form-group">
+                            <label>كلمة المرور الحالية</label>
+                            <input type="password" id="currentPassword">
+                        </div>
+                        <div class="form-group">
+                            <label>كلمة المرور الجديدة</label>
+                            <input type="password" id="newPassword" minlength="8">
+                        </div>
+                        <div class="form-group">
+                            <label>تأكيد كلمة المرور</label>
+                            <input type="password" id="confirmPassword">
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-secondary" onclick="changePassword(event)">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        تأكيد التغيير
+                    </button>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="document.getElementById('profileChangePwSection').classList.toggle('hidden')">تغيير كلمة المرور</button>
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('profileChangePwSection').classList.toggle('hidden')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    تغيير كلمة المرور
+                </button>
                 <button type="button" class="btn btn-secondary" onclick="closeProfileModal()">إلغاء</button>
-                <button type="submit" class="btn btn-primary">حفظ</button>
+                <button type="submit" class="btn btn-primary">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    حفظ
+                </button>
             </div>
         </form>
     </div>

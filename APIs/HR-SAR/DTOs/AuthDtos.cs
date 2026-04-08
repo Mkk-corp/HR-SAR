@@ -22,7 +22,8 @@ public record AuthResponseDto(
     string FullName,
     string? JobTitle,
     string[] Roles,
-    string[] Permissions
+    string[] Permissions,
+    string? PhotoUrl = null
 );
 
 public record ChangePasswordDto(

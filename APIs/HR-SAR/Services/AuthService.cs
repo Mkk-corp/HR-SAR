@@ -72,7 +72,8 @@ public class AuthService(
             user.FullName,
             user.JobTitle,
             [.. roles],
-            [.. permissions]
+            [.. permissions],
+            user.PhotoUrl
         );
     }
 
