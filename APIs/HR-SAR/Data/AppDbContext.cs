@@ -53,19 +53,19 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, 
             t.HasKey(x => x.Id);
 
             t.Property(x => x.Changes)
-             .HasColumnType("nvarchar(max)")
+             .HasColumnType("longtext")
              .HasConversion(
                  v => v == null ? null : JsonSerializer.Serialize(v, JsonOpts),
                  v => v == null ? null : JsonSerializer.Deserialize<TransferChanges>(v, JsonOpts));
 
             t.Property(x => x.Settlement)
-             .HasColumnType("nvarchar(max)")
+             .HasColumnType("longtext")
              .HasConversion(
                  v => v == null ? null : JsonSerializer.Serialize(v, JsonOpts),
                  v => v == null ? null : JsonSerializer.Deserialize<TransferSettlement>(v, JsonOpts));
 
             t.Property(x => x.AuditLog)
-             .HasColumnType("nvarchar(max)")
+             .HasColumnType("longtext")
              .HasConversion(
                  v => JsonSerializer.Serialize(v, JsonOpts),
                  v => JsonSerializer.Deserialize<List<TransferAuditEntry>>(v, JsonOpts) ?? new())
