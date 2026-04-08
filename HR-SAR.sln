@@ -1,0 +1,29 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "APIs", "APIs", "{A493B712-D036-515A-2346-D66A3A2D9736}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HR-SAR", "APIs\HR-SAR\HR-SAR.csproj", "{445ECEF5-1E71-7A46-8E3B-A1203802E619}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{445ECEF5-1E71-7A46-8E3B-A1203802E619}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{445ECEF5-1E71-7A46-8E3B-A1203802E619}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{445ECEF5-1E71-7A46-8E3B-A1203802E619}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{445ECEF5-1E71-7A46-8E3B-A1203802E619}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{445ECEF5-1E71-7A46-8E3B-A1203802E619} = {A493B712-D036-515A-2346-D66A3A2D9736}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {7FF7E432-B4E4-483E-84CA-B0FDF3C98B17}
+	EndGlobalSection
+EndGlobal

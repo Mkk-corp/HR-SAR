@@ -1,11 +1,12 @@
 using System.Text.Json;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using HR_SAR.Models;
 
 namespace HR_SAR.Data;
 
-public class AppDbContext : DbContext
+public class AppDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, string>
 {
     private static readonly JsonSerializerOptions JsonOpts = new()
     {
@@ -17,6 +18,8 @@ public class AppDbContext : DbContext
     public DbSet<Employee> Employees => Set<Employee>();
     public DbSet<Facility> Facilities => Set<Facility>();
     public DbSet<Transfer> Transfers => Set<Transfer>();
+    public DbSet<Permission> Permissions => Set<Permission>();
+    public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -75,6 +78,27 @@ public class AppDbContext : DbContext
              .WithMany(e => e.Transfers)
              .HasForeignKey(x => x.EmployeeId)
              .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ── Permission ────────────────────────────────────────────────────────
+        modelBuilder.Entity<Permission>(p =>
+        {
+            p.HasKey(x => x.Id);
+            p.HasIndex(x => x.Name).IsUnique();
+        });
+
+        // ── RolePermission (composite PK) ─────────────────────────────────────
+        modelBuilder.Entity<RolePermission>(rp =>
+        {
+            rp.HasKey(x => new { x.RoleId, x.PermissionId });
+            rp.HasOne(x => x.Role)
+              .WithMany(r => r.RolePermissions)
+              .HasForeignKey(x => x.RoleId)
+              .OnDelete(DeleteBehavior.Cascade);
+            rp.HasOne(x => x.Permission)
+              .WithMany(p => p.RolePermissions)
+              .HasForeignKey(x => x.PermissionId)
+              .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }
