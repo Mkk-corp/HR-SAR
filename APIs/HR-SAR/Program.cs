@@ -10,6 +10,10 @@ using HR_SAR.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// ── Listen on Railway's PORT (defaults to 8080) ───────────────────────────────
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+
 // ── Controllers ───────────────────────────────────────────────────────────────
 builder.Services.AddControllers();
 
