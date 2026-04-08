@@ -1,7 +1,7 @@
 'use strict';
 
-// ===== API Base URL =====
-const API_BASE = 'http://localhost:5140/api';
+// ===== API Base URL (set in js/config.js) =====
+const API_BASE = (typeof APP_CONFIG !== 'undefined' ? APP_CONFIG.API_BASE : 'http://localhost:5140/api');
 
 // ===== Core Fetch Wrapper =====
 async function apiFetch(path, options = {}) {
