@@ -106,6 +106,24 @@ using (var scope = app.Services.CreateScope())
     await DataSeeder.SeedAsync(scope.ServiceProvider);
 
 // ── Middleware pipeline ───────────────────────────────────────────────────────
+
+// Force CORS headers on every response — including crashes/errors
+app.Use(async (context, next) =>
+{
+    context.Response.Headers["Access-Control-Allow-Origin"]  = "*";
+    context.Response.Headers["Access-Control-Allow-Headers"] = "*";
+    context.Response.Headers["Access-Control-Allow-Methods"] = "*";
+
+    if (context.Request.Method == "OPTIONS")
+    {
+        context.Response.StatusCode = 200;
+        await context.Response.CompleteAsync();
+        return;
+    }
+
+    await next();
+});
+
 app.UseSwagger();
 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "HR-SAR API v1"));
 
