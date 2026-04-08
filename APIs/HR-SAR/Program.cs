@@ -87,12 +87,13 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 
-// ── CORS — allow all origins ──────────────────────────────────────────────────
+// ── CORS — allow everything ───────────────────────────────────────────────────
 builder.Services.AddCors(options =>
-    options.AddDefaultPolicy(policy =>
+    options.AddPolicy("AllowAll", policy =>
         policy.AllowAnyOrigin()
               .AllowAnyHeader()
-              .AllowAnyMethod()));
+              .AllowAnyMethod()
+              .SetPreflightMaxAge(TimeSpan.FromSeconds(3600))));
 
 var app = builder.Build();
 
@@ -104,7 +105,8 @@ using (var scope = app.Services.CreateScope())
 app.UseSwagger();
 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "HR-SAR API v1"));
 
-app.UseCors();
+app.UseRouting();
+app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
