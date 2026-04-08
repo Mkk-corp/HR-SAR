@@ -28,7 +28,7 @@ public class ProfileController(
             .Select(c => c.Value)
             .ToArray();
 
-        return Ok(new ProfileDto(user.Id, user.Email!, user.FullName, user.JobTitle, [.. roles], permissions));
+        return Ok(new ProfileDto(user.Id, user.Email!, user.FullName, user.JobTitle, [.. roles], permissions, user.PhotoUrl));
     }
 
     /// <summary>Update the currently logged-in user's own profile.</summary>
@@ -44,6 +44,8 @@ public class ProfileController(
 
         user.FullName = dto.FullName;
         user.JobTitle = dto.JobTitle;
+        if (dto.PhotoUrl is not null)
+            user.PhotoUrl = dto.PhotoUrl;
         await userManager.UpdateAsync(user);
 
         var roles = await userManager.GetRolesAsync(user);
@@ -52,7 +54,7 @@ public class ProfileController(
             .Select(c => c.Value)
             .ToArray();
 
-        return Ok(new ProfileDto(user.Id, user.Email!, user.FullName, user.JobTitle, [.. roles], permissions));
+        return Ok(new ProfileDto(user.Id, user.Email!, user.FullName, user.JobTitle, [.. roles], permissions, user.PhotoUrl));
     }
 
     /// <summary>Change the currently logged-in user's password.</summary>

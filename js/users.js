@@ -24,34 +24,35 @@ async function loadUsersTab() {
 }
 
 function renderUsersTable() {
-    const tbody = document.getElementById('usersTableBody');
+    const tbody  = document.getElementById('usersTableBody');
+    const empty  = document.getElementById('usersEmptyState');
+    const table  = document.getElementById('usersTable');
     if (!tbody) return;
 
-    if (!_users.length) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-3);padding:2rem">لا يوجد مستخدمون</td></tr>`;
-        return;
-    }
+    const visible = _users.length > 0;
+    table.style.display  = visible ? '' : 'none';
+    if (empty) empty.classList.toggle('hidden', visible);
 
     tbody.innerHTML = _users.map(u => `
         <tr>
             <td>
-                <div style="display:flex;align-items:center;gap:.75rem">
-                    <div class="emp-avatar" style="background:${avatarColor(u.fullName)};flex-shrink:0">${(u.fullName||'?').charAt(0)}</div>
+                <div class="emp-cell">
+                    <div class="emp-avatar" style="background:${avatarColor(u.fullName)}">${(u.fullName||'?').charAt(0)}</div>
                     <div>
-                        <div style="font-weight:500">${u.fullName}</div>
-                        <div style="font-size:12px;color:var(--text-3)">${u.jobTitle || ''}</div>
+                        <div class="emp-name">${u.fullName}</div>
+                        <div class="emp-email">${u.jobTitle || ''}</div>
                     </div>
                 </div>
             </td>
-            <td>${u.email}</td>
+            <td style="color:var(--text-2);font-size:13px">${u.email}</td>
             <td>${(u.roles||[]).map(r => `<span class="badge badge-blue">${r}</span>`).join(' ') || '—'}</td>
             <td>${u.isActive ? '<span class="badge badge-success">نشط</span>' : '<span class="badge badge-danger">غير نشط</span>'}</td>
-            <td>${fmtDate(u.createdAt)}</td>
+            <td style="color:var(--text-3);font-size:12.5px">${fmtDate(u.createdAt)}</td>
             <td>
-                <div style="display:flex;gap:.5rem;justify-content:flex-end">
-                    ${authManager.hasPermission('users.edit')   ? `<button class="btn btn-sm btn-outline" onclick="openEditUserModal('${u.id}')">تعديل</button>` : ''}
-                    ${authManager.hasPermission('users.edit')   ? `<button class="btn btn-sm btn-outline" onclick="openResetPasswordModal('${u.id}','${u.fullName}')">كلمة المرور</button>` : ''}
-                    ${authManager.hasPermission('users.delete') ? `<button class="btn btn-sm btn-danger"  onclick="confirmDeleteUser('${u.id}','${u.fullName}')">حذف</button>` : ''}
+                <div class="action-btns">
+                    ${authManager.hasPermission('users.edit')   ? `<button class="btn btn-sm btn-ghost" onclick="openEditUserModal('${u.id}')">تعديل</button>` : ''}
+                    ${authManager.hasPermission('users.edit')   ? `<button class="btn btn-sm btn-ghost" onclick="openResetPasswordModal('${u.id}','${u.fullName}')">كلمة المرور</button>` : ''}
+                    ${authManager.hasPermission('users.delete') ? `<button class="btn btn-sm btn-danger" onclick="confirmDeleteUser('${u.id}','${u.fullName}')">حذف</button>` : ''}
                 </div>
             </td>
         </tr>
@@ -186,22 +187,25 @@ async function loadRolesTab() {
 
 function renderRolesTable() {
     const tbody = document.getElementById('rolesTableBody');
+    const empty = document.getElementById('rolesEmptyState');
+    const table = document.getElementById('rolesTable');
     if (!tbody) return;
 
-    if (!_roles.length) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text-3);padding:2rem">لا توجد أدوار</td></tr>`;
-        return;
-    }
+    const visible = _roles.length > 0;
+    table.style.display = visible ? '' : 'none';
+    if (empty) empty.classList.toggle('hidden', visible);
 
     tbody.innerHTML = _roles.map(r => `
         <tr>
-            <td><strong>${r.name}</strong></td>
-            <td style="color:var(--text-3)">${r.description || '—'}</td>
-            <td><span class="badge badge-blue">${r.permissionCount} صلاحية</span></td>
-            <td><span class="badge ${r.userCount > 0 ? 'badge-success' : ''}">${r.userCount} مستخدم</span></td>
             <td>
-                <div style="display:flex;gap:.5rem;justify-content:flex-end">
-                    ${authManager.hasPermission('roles.edit')   ? `<button class="btn btn-sm btn-outline" onclick="openEditRoleModal('${r.id}')">تعديل</button>` : ''}
+                <div style="font-weight:600;font-size:13.5px;color:var(--text)">${r.name}</div>
+            </td>
+            <td style="color:var(--text-3);font-size:13px">${r.description || '—'}</td>
+            <td><span class="badge badge-blue">${r.permissionCount} صلاحية</span></td>
+            <td><span class="badge ${r.userCount > 0 ? 'badge-success' : 'badge-blue'}">${r.userCount} مستخدم</span></td>
+            <td>
+                <div class="action-btns">
+                    ${authManager.hasPermission('roles.edit')   ? `<button class="btn btn-sm btn-ghost" onclick="openEditRoleModal('${r.id}')">تعديل</button>` : ''}
                     ${authManager.hasPermission('roles.delete') ? `<button class="btn btn-sm btn-danger" onclick="confirmDeleteRole('${r.id}','${r.name}')" ${r.userCount > 0 ? 'disabled title="الدور مُسنَد لمستخدمين"' : ''}>حذف</button>` : ''}
                 </div>
             </td>

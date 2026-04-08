@@ -1,0 +1,17 @@
+# .NET build output
+APIs/**/bin/
+APIs/**/obj/
+
+# Frontend build & deps
+frontend/node_modules/
+frontend/dist/
+
+# Environment / secrets
+appsettings.*.json
+!appsettings.json
+.env
+.env.*
+
+# OS
+.DS_Store
+Thumbs.db

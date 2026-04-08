@@ -1,0 +1,10 @@
+.page {}
+
+.loadingWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  color: var(--text-3);
+  font-size: 14px;
+}

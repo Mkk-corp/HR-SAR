@@ -39,6 +39,7 @@ public class UserService(
             FullName = dto.FullName,
             JobTitle = dto.JobTitle,
             IsActive = true,
+            PhotoUrl = dto.PhotoUrl,
         };
 
         var result = await userManager.CreateAsync(user, dto.Password);
@@ -94,5 +95,5 @@ public class UserService(
     }
 
     private static UserDto Map(ApplicationUser u, IList<string> roles) =>
-        new(u.Id, u.Email!, u.FullName, u.JobTitle, u.IsActive, [.. roles], u.CreatedAt);
+        new(u.Id, u.Email!, u.FullName, u.JobTitle, u.IsActive, [.. roles], u.CreatedAt, u.PhotoUrl);
 }
