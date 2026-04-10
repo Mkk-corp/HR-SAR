@@ -20,6 +20,10 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, 
     public DbSet<Transfer> Transfers => Set<Transfer>();
     public DbSet<Permission> Permissions => Set<Permission>();
     public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
+    public DbSet<OrganizationUnit> OrganizationUnits => Set<OrganizationUnit>();
+    public DbSet<JobTitle> JobTitles => Set<JobTitle>();
+    public DbSet<Position> Positions => Set<Position>();
+    public DbSet<EmployeePosition> EmployeePositions => Set<EmployeePosition>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -78,6 +82,55 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, 
              .WithMany(e => e.Transfers)
              .HasForeignKey(x => x.EmployeeId)
              .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ── OrganizationUnit (self-referencing) ───────────────────────────────
+        modelBuilder.Entity<OrganizationUnit>(u =>
+        {
+            u.HasKey(x => x.Id);
+            u.HasOne(x => x.Parent)
+             .WithMany(x => x.Children)
+             .HasForeignKey(x => x.ParentId)
+             .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ── JobTitle ──────────────────────────────────────────────────────────
+        modelBuilder.Entity<JobTitle>(j =>
+        {
+            j.HasKey(x => x.Id);
+            j.HasIndex(x => x.Code).IsUnique();
+        });
+
+        // ── Position ──────────────────────────────────────────────────────────
+        modelBuilder.Entity<Position>(p =>
+        {
+            p.HasKey(x => x.Id);
+            p.HasOne(x => x.JobTitle)
+             .WithMany(j => j.Positions)
+             .HasForeignKey(x => x.JobTitleId)
+             .OnDelete(DeleteBehavior.Restrict);
+            p.HasOne(x => x.OrgUnit)
+             .WithMany(u => u.Positions)
+             .HasForeignKey(x => x.OrgUnitId)
+             .OnDelete(DeleteBehavior.Restrict);
+            p.HasOne(x => x.ManagerPosition)
+             .WithMany(x => x.SubordinatePositions)
+             .HasForeignKey(x => x.ManagerPositionId)
+             .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // ── EmployeePosition (composite PK) ───────────────────────────────────
+        modelBuilder.Entity<EmployeePosition>(ep =>
+        {
+            ep.HasKey(x => new { x.EmployeeId, x.PositionId, x.StartDate });
+            ep.HasOne(x => x.Employee)
+              .WithMany()
+              .HasForeignKey(x => x.EmployeeId)
+              .OnDelete(DeleteBehavior.Cascade);
+            ep.HasOne(x => x.Position)
+              .WithMany(p => p.EmployeePositions)
+              .HasForeignKey(x => x.PositionId)
+              .OnDelete(DeleteBehavior.Cascade);
         });
 
         // ── Permission ────────────────────────────────────────────────────────

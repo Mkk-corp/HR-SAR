@@ -12,6 +12,9 @@ const PAGE_TITLES = {
   '/users': 'إدارة المستخدمين',
   '/roles': 'الأدوار والصلاحيات',
   '/profile': 'الملف الشخصي',
+  '/org-units': 'الهيكل التنظيمي',
+  '/job-titles': 'المسميات الوظيفية',
+  '/positions': 'المناصب الوظيفية',
 };
 
 export default function TopBar() {
