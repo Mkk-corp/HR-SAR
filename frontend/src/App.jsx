@@ -13,6 +13,9 @@ import TransfersPage from './pages/Transfers/TransfersPage';
 import UsersPage from './pages/Users/UsersPage';
 import RolesPage from './pages/Roles/RolesPage';
 import ProfilePage from './pages/Profile/ProfilePage';
+import OrgUnitsPage from './pages/OrgUnits/OrgUnitsPage';
+import JobTitlesPage from './pages/JobTitles/JobTitlesPage';
+import PositionsPage from './pages/Positions/PositionsPage';
 
 function PrivateRoute({ children }) {
   const { isLoggedIn, loading } = useAuth();
@@ -39,6 +42,9 @@ function AppRoutes() {
       <Route path="/users" element={<PrivateRoute><AppLayout><UsersPage /></AppLayout></PrivateRoute>} />
       <Route path="/roles" element={<PrivateRoute><AppLayout><RolesPage /></AppLayout></PrivateRoute>} />
       <Route path="/profile" element={<PrivateRoute><AppLayout><ProfilePage /></AppLayout></PrivateRoute>} />
+      <Route path="/org-units" element={<PrivateRoute><AppLayout><OrgUnitsPage /></AppLayout></PrivateRoute>} />
+      <Route path="/job-titles" element={<PrivateRoute><AppLayout><JobTitlesPage /></AppLayout></PrivateRoute>} />
+      <Route path="/positions" element={<PrivateRoute><AppLayout><PositionsPage /></AppLayout></PrivateRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

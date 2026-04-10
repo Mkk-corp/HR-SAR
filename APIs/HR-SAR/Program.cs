@@ -91,6 +91,9 @@ builder.Services.AddScoped<ITransferService, TransferService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
+builder.Services.AddScoped<IOrgUnitService, OrgUnitService>();
+builder.Services.AddScoped<IJobTitleService, JobTitleService>();
+builder.Services.AddScoped<IPositionService, PositionService>();
 
 // ── CORS — allow everything ───────────────────────────────────────────────────
 builder.Services.AddCors(options =>
